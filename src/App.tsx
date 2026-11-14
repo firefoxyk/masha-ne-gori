@@ -3,6 +3,7 @@ import { createInitialGameState, STAT_MAX } from './game/state'
 import { ACTIONS, getActionUnavailableReason, performAction } from './game/actions'
 import type { ActionId } from './game/actions'
 import { finishDay, getDaySummary, startNextDay } from './game/day'
+import { getStateWarnings } from './game/warnings'
 
 export default function App() {
   const [{ game, message }, setView] = useState(() => ({
@@ -29,6 +30,7 @@ export default function App() {
     })
   }
   const summary = game.dayStatus === 'finished' ? getDaySummary(game) : null
+  const warnings = getStateWarnings(game)
   const summaryRows = summary && [
     { label: 'Энергия', value: summary.endValues.energy, change: summary.changes.energy },
     { label: 'Сытость', value: summary.endValues.satiety, change: summary.changes.satiety },
@@ -89,6 +91,14 @@ export default function App() {
               <div><dt>Деньги</dt><dd>{game.money}</dd></div>
               <div><dt>Незаконченные проекты</dt><dd>{game.unfinishedProjects}</dd></div>
             </dl>
+            <div aria-live="polite" aria-atomic="true">
+              {warnings.length > 0 && (
+                <div className="state-warnings" aria-label="Предупреждения о состоянии">
+                  <p className="warnings-title">Стоит позаботиться о Маше</p>
+                  <ul>{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+                </div>
+              )}
+            </div>
           </section>
 
           <section className="panel actions" aria-labelledby="actions-title">
