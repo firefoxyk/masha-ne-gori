@@ -37,7 +37,7 @@ export function chooseEvent(session: EventSession, game: GameState, choiceId: st
     const actual = next[field] - game[field]
     if (actual !== 0) changes[field] = actual
   }
-  return { game: next, events: { history: recordEventCompleted(session.history, event.id), pending: { eventId: event.id, choiceId, changes } } }
+  return { game: next, events: { history: recordEventCompleted(session.history, event.id, choiceId, game.day), pending: { eventId: event.id, choiceId, changes } } }
 }
 
 export function continueEvent(session: EventSession): EventSession {
@@ -56,6 +56,11 @@ export function isValidEventSession(value: unknown, game: GameState): value is E
   if (!Object.entries(h.lastShownByEvent).every(([id, day]) => ids.has(id) && Number.isSafeInteger(day) && (day as number) >= 1 && (day as number) <= game.day && h.shownDay !== null && (day as number) <= (h.shownDay as number))) return false
   if (!h.completedEventIds.every((id) => typeof id === 'string' && ids.has(id) && h.lastShownByEvent && Object.hasOwn(h.lastShownByEvent, id))) return false
   if (new Set(h.completedEventIds).size !== h.completedEventIds.length) return false
+  if (!record(h.completedChoices)) return false
+  for (const [id, completion] of Object.entries(h.completedChoices)) {
+    const event = exampleEvents.find((item) => item.id === id)
+    if (!event || !h.completedEventIds.includes(id) || !record(completion) || typeof completion.choiceId !== 'string' || !event.choices.some((choice) => choice.id === completion.choiceId) || !Number.isSafeInteger(completion.day) || (completion.day as number) < 1 || (completion.day as number) > game.day || (completion.day as number) > (h.lastShownByEvent[id] as number)) return false
+  }
   if (value.pending === null) return true
   if (!record(value.pending) || typeof value.pending.eventId !== 'string' || game.dayStatus !== 'active') return false
   const event = exampleEvents.find((item) => item.id === (value.pending as { eventId: string }).eventId)

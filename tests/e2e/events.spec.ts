@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { createInitialGameState } from '../../src/game/state.ts'
 import { SAVE_KEY } from '../../src/storage/gameStorage.ts'
+import { createEventHistory, recordEventShown } from '../../src/game/eventSelection.ts'
 
 test('событие после последнего действия восстанавливается до и после выбора', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 })
@@ -105,4 +106,37 @@ test('недоступный платный выбор объясняется, �
   await expect(dialog.getByText('Показатели не изменились.')).toBeVisible()
   await page.reload()
   await expect(page.getByRole('dialog').getByText('Показатели не изменились.')).toBeVisible()
+})
+
+test('ветка помощника восстанавливается после выбора и на следующем этапе', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  const game = { ...createInitialGameState(), day: 2, ownedItems: ['pillow'] }
+  const events = { history: recordEventShown(createEventHistory(), 'assistant-help-start', 2), pending: { eventId: 'assistant-help-start', choiceId: null, changes: null } }
+  await page.addInitScript(({ key, game, events }) => {
+    let draw = 0
+    Math.random = () => draw++ % 2 === 0 ? 0 : 0.999
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ version: 5, game, events }))
+  }, { key: SAVE_KEY, game, events })
+  await page.goto('/')
+  let dialog = page.getByRole('dialog', { name: 'Помощник и список' })
+  await expect(dialog).toBeVisible()
+  await page.reload()
+  await dialog.getByRole('button', { name: 'Попросить идею для отдыха' }).click()
+  await page.reload()
+  await expect(dialog.getByText(/задумался о хорошем отдыхе/)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Продолжить игру' }).click()
+  await page.getByRole('button', { name: 'Закончить день' }).click()
+  await page.getByRole('button', { name: 'Начать следующий день' }).click()
+  await page.reload()
+  await page.getByRole('button', { name: 'Отдохнуть' }).click()
+  dialog = page.getByRole('dialog', { name: 'Совет для отдыха' })
+  await expect(dialog).toBeVisible()
+  await page.reload()
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Выбрать простую паузу' }).click()
+  await page.reload()
+  await expect(dialog.getByText(/короткий план отдыха/)).toBeVisible()
+  await expect(dialog.getByText('Мотивация: +3')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Продолжить игру' }).click()
+  await expect(page.getByRole('img', { name: 'Купленная подушка на кровати' })).toBeVisible()
 })

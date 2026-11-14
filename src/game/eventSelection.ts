@@ -5,16 +5,16 @@ import type { GameState } from './state.ts'
 // Временные настройки для будущих игровых проб.
 export const EVENT_RULES = { chance: 0.5, maxPerDay: 1, repeatCooldownDays: 2 } as const
 
-/** Отдельная история: пока не включена в GameState или сохранение. */
 export interface EventHistory {
   shownDay: number | null
   shownCount: number
   lastShownByEvent: Record<string, number>
   completedEventIds: string[]
+  completedChoices: Record<string, { choiceId: string; day: number }>
 }
 
 export function createEventHistory(): EventHistory {
-  return { shownDay: null, shownCount: 0, lastShownByEvent: {}, completedEventIds: [] }
+  return { shownDay: null, shownCount: 0, lastShownByEvent: {}, completedEventIds: [], completedChoices: {} }
 }
 
 export function conditionsMatch(conditions: readonly EventCondition[], state: GameState): boolean {
@@ -45,6 +45,10 @@ export function choiceUnavailableReason(choice: EventChoice, state: GameState): 
 export function eligibleEvents(events: readonly GameEvent[], state: GameState, action: ActionId, history: EventHistory): GameEvent[] {
   if (state.dayStatus !== 'active' || (history.shownDay === state.day && history.shownCount >= EVENT_RULES.maxPerDay)) return []
   return events.filter((event) => {
+    if (event.continuation) {
+      const previous = history.completedChoices[event.continuation.eventId]
+      if (!previous || previous.choiceId !== event.continuation.choiceId || state.day - previous.day < event.continuation.minDays) return false
+    }
     if (event.trigger.type === 'after_action' && event.trigger.action !== action) return false
     if (!conditionsMatch(event.conditions, state) || availableEventChoices(event, state).length === 0) return false
     if (event.repeat === 'once' && history.completedEventIds.includes(event.id)) return false
@@ -82,7 +86,7 @@ export function recordEventShown(history: EventHistory, eventId: string, day: nu
 }
 
 /** Вызвать после фактического завершения показанного события, а не при отборе. */
-export function recordEventCompleted(history: EventHistory, eventId: string): EventHistory {
+export function recordEventCompleted(history: EventHistory, eventId: string, choiceId?: string, day?: number): EventHistory {
   if (history.lastShownByEvent[eventId] === undefined || history.completedEventIds.includes(eventId)) return history
-  return { ...history, completedEventIds: [...history.completedEventIds, eventId] }
+  return { ...history, completedEventIds: [...history.completedEventIds, eventId], completedChoices: choiceId && day !== undefined ? { ...history.completedChoices, [eventId]: { choiceId, day } } : history.completedChoices }
 }

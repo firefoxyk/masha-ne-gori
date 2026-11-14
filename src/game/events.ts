@@ -22,6 +22,7 @@ export interface GameEvent {
   trigger: EventTrigger
   conditions: EventCondition[]
   repeat: 'once' | 'repeatable'
+  continuation?: { eventId: string; choiceId: string; minDays: number }
   choices: [EventChoice, ...EventChoice[]]
 }
 
@@ -84,6 +85,11 @@ export function validateEvents(input: unknown): string[] {
     if (!record(event.trigger) || (event.trigger.type !== 'state' && (event.trigger.type !== 'after_action' || !['work', 'eat', 'rest'].includes(event.trigger.action as string)))) error(`${path}.trigger`, 'неизвестный момент события')
     conditions(event.conditions, `${path}.conditions`)
     if (event.repeat !== 'once' && event.repeat !== 'repeatable') error(`${path}.repeat`, 'неизвестное правило повторения')
+    if (event.continuation !== undefined) {
+      const link = event.continuation
+      if (!record(link) || typeof link.eventId !== 'string' || !idPattern.test(link.eventId) || typeof link.choiceId !== 'string' || !idPattern.test(link.choiceId) || !Number.isSafeInteger(link.minDays) || (link.minDays as number) < 1) error(`${path}.continuation`, 'некорректная связь')
+      if (event.repeat !== 'once') error(`${path}.repeat`, 'продолжение должно быть уникальным')
+    }
     if (!Array.isArray(event.choices) || event.choices.length === 0) { error(`${path}.choices`, 'нужен хотя бы один выбор'); return }
     const choiceIds = new Set<string>()
     event.choices.forEach((choice: unknown, i: number) => {
@@ -94,6 +100,12 @@ export function validateEvents(input: unknown): string[] {
       effects(choice.effects, `${at}.effects`)
       if (choice.conditions !== undefined) conditions(choice.conditions, `${at}.conditions`)
     })
+  })
+  input.forEach((event: unknown, index: number) => {
+    if (!record(event) || !record(event.continuation)) return
+    const link = event.continuation
+    const previous = input.find((item: unknown) => record(item) && item.id === link.eventId)
+    if (!record(previous) || previous.repeat !== 'once' || !Array.isArray(previous.choices) || !previous.choices.some((choice: unknown) => record(choice) && choice.id === link.choiceId) || previous.id === event.id) error(`events[${index}].continuation`, 'нужен уникальный предыдущий этап и существующий выбор')
   })
   return errors
 }

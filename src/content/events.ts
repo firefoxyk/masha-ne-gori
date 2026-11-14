@@ -87,8 +87,8 @@ export const exampleEvents = [
     dialogue: [{ speaker: 'Маша', text: 'Оба варианта звучат профессионально.' }],
     trigger: { type: 'after_action', action: 'rest' }, conditions: [], repeat: 'repeatable',
     choices: [
-      { id: 'stretch', text: 'Потянуться', effects: { energy: 4, motivation: -2 }, result: 'Маша потянулась и решила не торопить следующие дела.' },
-      { id: 'listen', text: 'Послушать тишину', effects: { sanity: 4, energy: -3 }, result: 'За окном кто-то шуршал, но в целом тишина удалась.' },
+      { id: 'stretch', text: 'Потянуться и отложить дела', effects: { energy: 4, motivation: -2 }, result: 'Маша потянулась и почувствовала прилив сил, но настроение приниматься за дела немного улетучилось.' },
+      { id: 'listen', text: 'Прислушаться к звукам за окном', effects: { sanity: 4, energy: -3 }, result: 'Маша отвлеклась и успокоилась, хотя внимательно прислушиваться оказалось немного утомительно.' },
     ],
   },
   {
@@ -97,8 +97,8 @@ export const exampleEvents = [
     dialogue: [{ speaker: 'Маша', text: 'Главное — не спугнуть.' }],
     trigger: { type: 'after_action', action: 'rest' }, conditions: [{ field: 'day', min: 2 }], repeat: 'repeatable',
     choices: [
-      { id: 'nap', text: 'Ещё немного полежать', effects: { energy: 5, motivation: -3 }, result: 'Маша устроилась поудобнее и отложила планы ненадолго.' },
-      { id: 'sketch', text: 'Набросать идею в блокноте', effects: { motivation: 4, energy: -4 }, result: 'В блокноте появилась идея и очень убедительная закорючка.' },
+      { id: 'nap', text: 'Ещё немного полежать', effects: { energy: 5, motivation: -3 }, result: 'Маша отдохнула, но приниматься за планы после этого расхотелось.' },
+      { id: 'sketch', text: 'Потратить силы на набросок идеи', effects: { motivation: 4, energy: -4 }, result: 'На набросок ушли силы, зато в блокноте появилась вдохновляющая идея и убедительная закорючка.' },
     ],
   },
   {
@@ -130,5 +130,51 @@ export const exampleEvents = [
       { id: 'negotiate', text: 'Обменять печенье на монетку', effects: { money: 5, sanity: -3 }, result: 'Гусь принял воображаемое печенье, но переговоры оказались напряжёнными.' },
       { id: 'wave', text: 'Помахать гусю и оставить находку ему', effects: { sanity: 3, motivation: -2 }, result: 'Гусь довольно зашагал прочь. Маша отвлеклась от дел.' },
     ],
+  },
+  {
+    id: 'goose-gift-start', title: 'Гусиный подарок',
+    text: 'Гусь торжественно принёс Маше перо и ждёт ответа.',
+    dialogue: [{ speaker: 'Гусь', text: 'Га!' }], trigger: { type: 'state' }, conditions: [{ field: 'day', min: 2 }], repeat: 'once',
+    choices: [
+      { id: 'accept', text: 'Принять перо', effects: { sanity: 3 }, result: 'Маша поблагодарила гуся и поставила перо в стакан.' },
+      { id: 'decline', text: 'Вежливо отказаться', effects: { motivation: 2 }, result: 'Маша объяснила, что перо нужнее гусю. Он задумался.' },
+    ],
+  },
+  {
+    id: 'goose-gift-accepted', title: 'Гусиная выставка',
+    text: 'Гусь вернулся и серьёзно осматривает своё перо в стакане.',
+    dialogue: [{ speaker: 'Гусь', text: 'Га-а!' }], trigger: { type: 'state' }, conditions: [], repeat: 'once',
+    continuation: { eventId: 'goose-gift-start', choiceId: 'accept', minDays: 1 },
+    choices: [{ id: 'admire', text: 'Устроить выставку одного пера', effects: { sanity: 3, energy: -2 }, result: 'Гусь одобрил выставку. Подготовка немного утомила Машу.' }],
+  },
+  {
+    id: 'goose-gift-declined', title: 'Гусиная коллекция',
+    text: 'Гусь вернулся с целой охапкой перьев. Похоже, отказ его вдохновил.',
+    dialogue: [{ speaker: 'Гусь', text: 'Га-га!' }], trigger: { type: 'state' }, conditions: [], repeat: 'once',
+    continuation: { eventId: 'goose-gift-start', choiceId: 'decline', minDays: 1 },
+    choices: [{ id: 'applaud', text: 'Похвалить коллекцию', effects: { motivation: 3, energy: -2 }, result: 'Гусь расправил крылья. Аплодировать оказалось небольшой зарядкой.' }],
+  },
+  {
+    id: 'assistant-help-start', title: 'Помощник и список',
+    text: 'Помощник предлагает помочь с бытовыми делами и ждёт инструкций.',
+    dialogue: [{ speaker: 'Помощник', text: 'Готов составить список. Даже два.' }], trigger: { type: 'after_action', action: 'work' }, conditions: [], repeat: 'once',
+    choices: [
+      { id: 'shopping', text: 'Попросить список покупок', effects: { sanity: 2 }, result: 'Помощник обещал подготовить список покупок.' },
+      { id: 'break', text: 'Попросить идею для отдыха', effects: { motivation: 2 }, result: 'Помощник задумался о хорошем отдыхе.' },
+    ],
+  },
+  {
+    id: 'assistant-shopping', title: 'Список с запасом',
+    text: 'В списке покупок помощника оказались чай, хлеб и сто огурцов.',
+    dialogue: [{ speaker: 'Помощник', text: 'На случай огуречного сезона.' }], trigger: { type: 'state' }, conditions: [], repeat: 'once',
+    continuation: { eventId: 'assistant-help-start', choiceId: 'shopping', minDays: 1 },
+    choices: [{ id: 'check', text: 'Проверить список', effects: { energy: -3, sanity: 3 }, result: 'Маша исправила список. Проверка заняла немного сил.' }],
+  },
+  {
+    id: 'assistant-break', title: 'Совет для отдыха',
+    text: 'Помощник предложил отдыхать по расписанию и приложил расписание на десять страниц.',
+    dialogue: [{ speaker: 'Помощник', text: 'Первый пункт — прочесть инструкцию.' }], trigger: { type: 'state' }, conditions: [], repeat: 'once',
+    continuation: { eventId: 'assistant-help-start', choiceId: 'break', minDays: 1 },
+    choices: [{ id: 'simplify', text: 'Выбрать простую паузу', effects: { motivation: 3, energy: -2 }, result: 'Маша составила короткий план отдыха и потратила немного сил на выбор.' }],
   },
 ] satisfies [GameEvent, ...GameEvent[]]
