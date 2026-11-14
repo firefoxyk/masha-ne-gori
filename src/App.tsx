@@ -1,34 +1,13 @@
-import { useState } from 'react'
-import { createInitialGameState, STAT_MAX } from './game/state'
-import { ACTIONS, getActionUnavailableReason, performAction } from './game/actions'
+import { STAT_MAX } from './game/state'
+import { ACTIONS, getActionUnavailableReason } from './game/actions'
 import type { ActionId } from './game/actions'
-import { finishDay, getDaySummary, startNextDay } from './game/day'
+import { getDaySummary } from './game/day'
 import { getStateWarnings } from './game/warnings'
+import { useGame } from './storage/useGame'
 
 export default function App() {
-  const [{ game, message }, setView] = useState(() => ({
-    game: createInitialGameState(),
-    message: 'Сегодня всё получится. А если нет — сначала поедим.',
-  }))
+  const { game, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, startNewGame } = useGame()
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
-  function handleAction(action: ActionId) {
-    setView((current) => {
-      const result = performAction(current.game, action)
-      return { game: result.state, message: result.message }
-    })
-  }
-  function handleFinishDay() {
-    setView((current) => {
-      if (current.game.dayStatus !== 'active') return current
-      return { game: finishDay(current.game), message: 'День завершён. Мы справились!' }
-    })
-  }
-  function handleNextDay() {
-    setView((current) => {
-      if (current.game.dayStatus !== 'finished') return current
-      return { game: startNextDay(current.game), message: 'Новый день — новая возможность не забыть про обед.' }
-    })
-  }
   const summary = game.dayStatus === 'finished' ? getDaySummary(game) : null
   const warnings = getStateWarnings(game)
   const summaryRows = summary && [
@@ -46,6 +25,19 @@ export default function App() {
     { label: 'Мотивация', value: game.motivation, icon: '✿', color: 'motivation' },
   ]
 
+  if (storage === 'invalid') {
+    return (
+      <main className="game-shell">
+        <section className="panel day-summary" aria-labelledby="save-error-title">
+          <h1 id="save-error-title">Не удалось открыть сохранение</h1>
+          <p>Сохранение повреждено или создано другой версией игры. Оно не будет изменено без вашего решения.</p>
+          <p>Можно начать новую игру. При этом старое сохранение будет заменено.</p>
+          <button className="next-day" type="button" onClick={startNewGame}>Начать новую игру</button>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="game-shell">
       <header className="game-header">
@@ -55,6 +47,10 @@ export default function App() {
         </div>
         <p className="day-badge">День {game.day}</p>
       </header>
+
+      {(storage === 'unavailable' || writeFailed) && (
+        <p className="day-finished" role="alert">Не удалось {storage === 'unavailable' ? 'прочитать сохранение' : 'сохранить прогресс'}. Можно играть дальше, но прогресс этой сессии не сохранится.</p>
+      )}
 
       <div className="game-layout">
         <div className="story-column">
