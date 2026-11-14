@@ -1,26 +1,85 @@
 :root {
-  font-family: system-ui, sans-serif;
-  color: #302a29;
-  background: #faf6f0;
-  line-height: 1.6;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #352b30;
+  background: #f9f3ed;
+  font-synthesis: none;
+  line-height: 1.5;
 }
 
-body {
-  margin: 0;
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 0; }
+button { font: inherit; }
+
+.game-shell { max-width: 1060px; margin: 0 auto; padding: 34px 24px 28px; }
+.game-header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+h1, h2, p { margin: 0; }
+h1, h2 { font-family: Georgia, serif; letter-spacing: -0.025em; }
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; }
+h2 { font-size: 1.45rem; line-height: 1.2; }
+.eyebrow { color: #795e62; font-size: .7rem; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; margin-bottom: 7px; }
+.day-badge { flex: none; background: #fffaf5; border: 1px solid #ead9cd; border-radius: 999px; padding: 8px 17px; font-weight: 700; color: #704c4c; }
+.game-layout { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.story-column, .dashboard { display: grid; gap: 16px; min-width: 0; }
+.room, .panel, .speech { border: 1px solid #eadbd0; border-radius: 22px; overflow: hidden; }
+.room { background: #f1ded1; padding: 20px 20px 0; }
+.room-topline { display: flex; justify-content: space-between; color: #745852; font-size: .7rem; font-weight: 800; letter-spacing: .13em; }
+.room-scene { position: relative; height: 350px; overflow: hidden; background: linear-gradient(to bottom, transparent 76%, #d8b49d 76%); }
+.window { position: absolute; top: 45px; left: 10%; width: 28%; height: 39%; background: #dcebe5; border: 8px solid #fff9ee; border-radius: 60px 60px 8px 8px; box-shadow: 0 4px 0 #d6b5a0; color: #8bb7a3; text-align: center; padding-top: 18px; font-size: 1.8rem; }
+.picture { position: absolute; right: 13%; top: 55px; width: 58px; height: 66px; display: grid; place-items: center; border: 6px solid #b78371; background: #f8eadc; color: #b55e62; font-size: 2rem; }
+.plant { position: absolute; bottom: 23%; right: 8%; font-size: 3rem; }
+.desk { position: absolute; bottom: 17%; left: 13%; width: 70%; height: 18%; border-radius: 8px 8px 3px 3px; background: #b78371; border-top: 10px solid #936253; display: flex; justify-content: space-around; align-items: start; font-size: 1.5rem; }
+.laptop { display: grid; place-items: center; width: 28%; height: 50px; margin-top: -54px; color: #fff; background: #8c817c; border: 4px solid #6a5d58; border-radius: 7px 7px 0 0; }
+.masha { position: absolute; bottom: 31%; left: 41%; width: 80px; height: 112px; text-align: center; }
+.masha-hair { position: absolute; top: -9px; left: 5px; color: #66433e; font-size: 5rem; line-height: 1; }
+.masha-face { position: absolute; top: 12px; left: 19px; width: 44px; height: 48px; display: grid; place-items: center; border-radius: 40%; background: #f6c4a9; font-weight: 700; }
+.masha-body { position: absolute; top: 59px; left: 9px; width: 64px; height: 54px; border-radius: 30px 30px 5px 5px; background: #b65f61; }
+.room-caption { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #604740; font-size: .75rem; }
+.speech { display: flex; gap: 14px; padding: 18px 20px; background: #fffaf6; }
+.speech-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #8b4b4e; background: #f6ddda; font-size: 1.5rem; }
+.speech-name { color: #8b4b4e; font-weight: 800; letter-spacing: .12em; font-size: .7rem; margin-bottom: 4px; }
+.panel { background: #fffdf9; padding: 22px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.section-heading > span { color: #ba7c6c; font-size: 1.7rem; }
+.stats { display: grid; gap: 15px; }
+.stat-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-weight: 650; font-size: .9rem; }
+.stat-heading label { display: flex; align-items: center; gap: 9px; }
+.stat-icon { display: inline-grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; }
+.stat-icon.energy { color: #855e16; background: #f7eacb; }
+.stat-icon.satiety { color: #a44f3e; background: #f8dfd4; }
+.stat-icon.sanity { color: #9d5461; background: #f7dce0; }
+.stat-icon.motivation { color: #5b7656; background: #e3eee0; }
+.stat-max { color: #755f60; font-weight: 400; }
+progress { display: block; width: 100%; height: 9px; margin-top: 7px; border: 0; border-radius: 20px; overflow: hidden; background: #f0e9e2; }
+progress::-webkit-progress-bar { background: #f0e9e2; border-radius: 20px; }
+progress::-webkit-progress-value { border-radius: 20px; background: #b45f64; }
+progress::-moz-progress-bar { border-radius: 20px; background: #b45f64; }
+progress.energy::-webkit-progress-value { background: #bc9143; }
+progress.satiety::-webkit-progress-value { background: #c77c65; }
+progress.motivation::-webkit-progress-value { background: #83a37a; }
+progress.energy::-moz-progress-bar { background: #bc9143; }
+progress.satiety::-moz-progress-bar { background: #c77c65; }
+progress.motivation::-moz-progress-bar { background: #83a37a; }
+.resources { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid #f0e6de; }
+.resources div { min-width: 0; }
+dt { color: #705c5d; font-size: .8rem; }
+dd { margin: 3px 0 0; font-weight: 750; font-size: 1.2rem; }
+.actions .section-heading { margin-bottom: 8px; }
+.actions-count { color: #674e51; font-size: .9rem; margin-bottom: 14px; }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.action-grid button { min-height: 48px; padding: 9px 10px; border: 1px solid #dfd1c9; border-radius: 12px; background: #f4eeea; color: #705f60; font-weight: 650; cursor: not-allowed; }
+.actions-note { margin-top: 12px; color: #705c5d; font-size: .82rem; }
+footer { margin-top: 22px; text-align: center; color: #796465; font-size: .78rem; }
+
+@media (max-width: 700px) {
+  .game-shell { padding: 24px 16px; }
+  .game-header { align-items: center; }
+  .game-layout { grid-template-columns: minmax(0, 1fr); }
+  .room-scene { height: 280px; }
 }
 
-main {
-  box-sizing: border-box;
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 15vh 1.5rem 3rem;
-}
-
-h1 {
-  font-size: clamp(2rem, 7vw, 3.5rem);
-  line-height: 1.15;
-}
-
-.status {
-  color: #6e5d56;
+@media (max-width: 350px) {
+  .game-shell { padding-inline: 12px; }
+  .day-badge { padding-inline: 10px; }
+  .panel { padding: 18px; }
+  .action-grid { grid-template-columns: 1fr; }
 }
