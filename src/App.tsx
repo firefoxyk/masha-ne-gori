@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createInitialGameState, STAT_MAX } from './game/state'
 import { ACTIONS, getActionUnavailableReason, performAction } from './game/actions'
 import type { ActionId } from './game/actions'
+import { finishDay, getDaySummary, startNextDay } from './game/day'
 
 export default function App() {
   const [{ game, message }, setView] = useState(() => ({
@@ -15,6 +16,27 @@ export default function App() {
       return { game: result.state, message: result.message }
     })
   }
+  function handleFinishDay() {
+    setView((current) => {
+      if (current.game.dayStatus !== 'active') return current
+      return { game: finishDay(current.game), message: 'День завершён. Мы справились!' }
+    })
+  }
+  function handleNextDay() {
+    setView((current) => {
+      if (current.game.dayStatus !== 'finished') return current
+      return { game: startNextDay(current.game), message: 'Новый день — новая возможность не забыть про обед.' }
+    })
+  }
+  const summary = game.dayStatus === 'finished' ? getDaySummary(game) : null
+  const summaryRows = summary && [
+    { label: 'Энергия', value: summary.endValues.energy, change: summary.changes.energy },
+    { label: 'Сытость', value: summary.endValues.satiety, change: summary.changes.satiety },
+    { label: 'Кукуха', value: summary.endValues.sanity, change: summary.changes.sanity },
+    { label: 'Мотивация', value: summary.endValues.motivation, change: summary.changes.motivation },
+    { label: 'Деньги', value: summary.endValues.money, change: summary.changes.money },
+    { label: 'Незаконченные проекты', value: summary.endValues.unfinishedProjects, change: summary.changes.unfinishedProjects },
+  ]
   const stats = [
     { label: 'Энергия', value: game.energy, icon: '✦', color: 'energy' },
     { label: 'Сытость', value: game.satiety, icon: '●', color: 'satiety' },
@@ -72,7 +94,7 @@ export default function App() {
           <section className="panel actions" aria-labelledby="actions-title">
             <div className="section-heading"><div><p className="eyebrow">ПЛАН НА ДЕНЬ</p><h2 id="actions-title">Чем займёмся?</h2></div></div>
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
-            {game.actionsRemaining === 0 && <p className="day-finished" role="status">Действия на сегодня закончились. День готов к завершению.</p>}
+            {game.actionsRemaining === 0 && game.dayStatus === 'active' && <p className="day-finished" role="status">Действия на сегодня закончились. Можно завершить день.</p>}
             <div className="action-grid">
               {actionIds.map((id) => {
                 const reason = getActionUnavailableReason(game, id)
@@ -84,11 +106,29 @@ export default function App() {
                 )
               })}
               <div className="action-item">
-                <button type="button" disabled aria-describedby="end-day-description">Закончить день</button>
-                <p className="action-description" id="end-day-description">Итоги и следующий день появятся в пункте 2.4.</p>
+                <button type="button" disabled={game.dayStatus === 'finished'} aria-describedby="end-day-description" onClick={handleFinishDay}>Закончить день</button>
+                <p className="action-description" id="end-day-description">{game.dayStatus === 'finished' ? 'День завершён.' : 'Можно закончить день в любой момент.'}</p>
               </div>
             </div>
           </section>
+          {summary && summaryRows && (
+            <section className="panel day-summary" aria-labelledby="summary-title">
+              <p className="eyebrow">МОЖНО ВЫДОХНУТЬ</p>
+              <h2 id="summary-title">Итоги дня {summary.day}</h2>
+              <p className="summary-actions">Использовано действий: {summary.actionsUsed}</p>
+              <p className="summary-note">Состояние на конец дня и изменение за день:</p>
+              <dl className="summary-list">
+                {summaryRows.map((row) => (
+                  <div key={row.label}>
+                    <dt>{row.label}</dt>
+                    <dd>{row.value} <span>({row.change > 0 ? '+' : ''}{row.change})</span></dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="summary-message">Маша: «День завершён. Мы справились!»</p>
+              <button className="next-day" type="button" onClick={handleNextDay}>Начать следующий день</button>
+            </section>
+          )}
         </div>
       </div>
       <footer>Пока это первый набросок игры · Продолжение следует</footer>

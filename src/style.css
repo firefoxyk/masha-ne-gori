@@ -72,6 +72,16 @@ dd { margin: 3px 0 0; font-weight: 750; font-size: 1.2rem; }
 .action-grid button:focus-visible { outline: 3px solid #593746; outline-offset: 2px; }
 .action-description { margin: 5px 2px 8px; color: #705c5d; font-size: .78rem; }
 .day-finished { margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #e7efe2; color: #344d35; font-weight: 650; }
+.summary-actions { margin-top: 12px; font-weight: 650; }
+.summary-note { margin-top: 6px; color: #705c5d; font-size: .9rem; }
+.summary-list { margin: 14px 0; }
+.summary-list div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f0e6de; }
+.summary-list dt { font-size: .9rem; }
+.summary-list dd { margin: 0; font-size: .95rem; white-space: nowrap; }
+.summary-list dd span { color: #705c5d; font-weight: 500; }
+.summary-message { margin: 16px 0; }
+.next-day { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid #a35857; border-radius: 12px; background: #ad6060; color: #fff; font-weight: 650; cursor: pointer; }
+.next-day:focus-visible { outline: 3px solid #593746; outline-offset: 2px; }
 footer { margin-top: 22px; text-align: center; color: #796465; font-size: .78rem; }
 
 @media (max-width: 700px) {

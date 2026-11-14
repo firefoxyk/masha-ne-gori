@@ -14,6 +14,7 @@ describe('начальное состояние игры', () => {
       unfinishedProjects: 0,
       dayStatus: 'active',
       actionsRemaining: 5,
+      dayStart: { energy: 80, satiety: 70, sanity: 80, money: 100, motivation: 70, unfinishedProjects: 0 },
     })
     expect(isValidGameState(state)).toBe(true)
   })
@@ -21,7 +22,9 @@ describe('начальное состояние игры', () => {
   it('создаёт независимые состояния для разных игр', () => {
     const first = createInitialGameState()
     first.energy = 0
+    first.dayStart.energy = 0
     expect(createInitialGameState().energy).toBe(80)
+    expect(createInitialGameState().dayStart.energy).toBe(80)
   })
 })
 
