@@ -56,8 +56,8 @@ export function useGame() {
   }
   function handleEventChoice(choiceId: string) {
     setView((current) => {
-      const events = chooseEvent(current.events, current.game, choiceId)
-      return events === current.events ? current : { ...current, events, revision: current.revision + 1 }
+      const result = chooseEvent(current.events, current.game, choiceId)
+      return result.events === current.events ? current : { ...current, ...result, revision: current.revision + 1 }
     })
   }
   function handleEventContinue() {

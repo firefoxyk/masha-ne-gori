@@ -1,12 +1,13 @@
 import { exampleEvents } from '../content/events.ts'
-import { availableEventChoices, createEventHistory, recordEventCompleted, recordEventShown, selectEvent } from './eventSelection.ts'
+import { choiceUnavailableReason, createEventHistory, recordEventCompleted, recordEventShown, selectEvent } from './eventSelection.ts'
 import type { EventHistory } from './eventSelection.ts'
 import type { ActionId } from './actions.ts'
-import type { GameState } from './state.ts'
+import { STAT_MAX, STAT_MIN } from './state.ts'
+import type { DayValues, GameState } from './state.ts'
 
 export interface EventSession {
   history: EventHistory
-  pending: { eventId: string; choiceId: string | null } | null
+  pending: { eventId: string; choiceId: string | null; changes: Partial<DayValues> | null } | null
 }
 
 export function createEventSession(): EventSession {
@@ -17,14 +18,26 @@ export function eventAfterAction(session: EventSession, result: { state: GameSta
   if (session.pending) return session
   const event = selectEvent(exampleEvents, result, action, session.history, random)
   if (!event) return session
-  return { history: recordEventShown(session.history, event.id, result.state.day), pending: { eventId: event.id, choiceId: null } }
+  return { history: recordEventShown(session.history, event.id, result.state.day), pending: { eventId: event.id, choiceId: null, changes: null } }
 }
 
-export function chooseEvent(session: EventSession, game: GameState, choiceId: string): EventSession {
-  if (!session.pending || session.pending.choiceId !== null) return session
+export function chooseEvent(session: EventSession, game: GameState, choiceId: string): { events: EventSession; game: GameState } {
+  const unchanged = { events: session, game }
+  if (!session.pending || session.pending.choiceId !== null) return unchanged
   const event = exampleEvents.find((item) => item.id === session.pending!.eventId)
-  if (!event || !availableEventChoices(event, game).some((choice) => choice.id === choiceId)) return session
-  return { history: recordEventCompleted(session.history, event.id), pending: { eventId: event.id, choiceId } }
+  const choice = event?.choices.find((item) => item.id === choiceId)
+  if (!event || !choice || choiceUnavailableReason(choice, game)) return unchanged
+  const next = { ...game }
+  const changes: Partial<DayValues> = {}
+  const fields: (keyof DayValues)[] = ['energy', 'satiety', 'sanity', 'motivation', 'money', 'unfinishedProjects']
+  for (const field of fields) {
+    const delta = (choice.effects as Partial<DayValues>)[field] ?? 0
+    const max = field === 'money' ? Number.MAX_VALUE : field === 'unfinishedProjects' ? Number.MAX_SAFE_INTEGER : STAT_MAX
+    next[field] = Math.min(max, Math.max(STAT_MIN, game[field] + delta))
+    const actual = next[field] - game[field]
+    if (actual !== 0) changes[field] = actual
+  }
+  return { game: next, events: { history: recordEventCompleted(session.history, event.id), pending: { eventId: event.id, choiceId, changes } } }
 }
 
 export function continueEvent(session: EventSession): EventSession {
@@ -47,6 +60,8 @@ export function isValidEventSession(value: unknown, game: GameState): value is E
   if (!record(value.pending) || typeof value.pending.eventId !== 'string' || game.dayStatus !== 'active') return false
   const event = exampleEvents.find((item) => item.id === (value.pending as { eventId: string }).eventId)
   if (!event || h.shownDay !== game.day || h.lastShownByEvent[event.id] !== game.day) return false
-  if (value.pending.choiceId === null) return !h.completedEventIds.includes(event.id) || event.repeat === 'repeatable'
+  const changes = value.pending.changes
+  if (value.pending.choiceId === null) return changes === null && (!h.completedEventIds.includes(event.id) || event.repeat === 'repeatable')
+  if (changes !== null && (!record(changes) || !Object.entries(changes).every(([field, delta]) => ['energy', 'satiety', 'sanity', 'motivation', 'money', 'unfinishedProjects'].includes(field) && typeof delta === 'number' && Number.isFinite(delta) && (field !== 'unfinishedProjects' || Number.isSafeInteger(delta))))) return false
   return typeof value.pending.choiceId === 'string' && event.choices.some((choice) => choice.id === (value.pending as { choiceId: string }).choiceId) && h.completedEventIds.includes(event.id)
 }

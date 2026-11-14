@@ -1,6 +1,6 @@
 import type { GameEvent } from '../game/events.ts'
 
-// Черновые истории для проверки формата; игра пока их не использует.
+// Черновые истории; тексты и числовой баланс могут измениться после игровых проб.
 export const exampleEvents = [
   {
     id: 'assistant-report',

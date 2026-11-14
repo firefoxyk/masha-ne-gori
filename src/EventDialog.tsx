@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { exampleEvents } from './content/events'
-import { availableEventChoices } from './game/eventSelection'
+import { choiceUnavailableReason } from './game/eventSelection'
 import type { EventSession } from './game/eventSession'
 import type { GameState } from './game/state'
 
@@ -26,11 +26,14 @@ export default function EventDialog({ pending, game, onChoose, onContinue, saveP
     {choice ? <section aria-labelledby="event-result-title">
       <h3 id="event-result-title" tabIndex={-1} ref={resultRef}>Результат</h3>
       <p>{choice.result}</p>
-      <p className="event-note">В этой версии выбор пока не изменяет показатели и деньги.</p>
+      {pending.changes === null ? <p className="event-note">Этот выбор сделан в предыдущей версии, когда последствия ещё не применялись.</p> : Object.keys(pending.changes).length === 0 ? <p className="event-note">Показатели не изменились.</p> : <div className="event-note"><p>Изменения:</p><ul>{Object.entries(pending.changes).map(([field, amount]) => <li key={field}>{({ energy: 'Энергия', satiety: 'Сытость', sanity: 'Кукуха', motivation: 'Мотивация', money: 'Деньги', unfinishedProjects: 'Незаконченные проекты' } as Record<string, string>)[field]}: {amount > 0 ? '+' : ''}{amount}</li>)}</ul></div>}
       <button type="button" onClick={onContinue}>Продолжить игру</button>
     </section> : <section aria-labelledby="event-choice-title">
       <h3 id="event-choice-title">Что выберет Маша?</h3>
-      {availableEventChoices(event, game).map((item) => <button type="button" key={item.id} onClick={() => onChoose(item.id)}>{item.text}</button>)}
+      {event.choices.map((item) => {
+        const reason = choiceUnavailableReason(item, game)
+        return <div key={item.id}><button type="button" disabled={!!reason} aria-describedby={reason ? `choice-${item.id}-reason` : undefined} onClick={() => onChoose(item.id)}>{item.text}</button>{reason && <p id={`choice-${item.id}-reason`} className="event-note">{reason}</p>}</div>
+      })}
     </section>}
   </dialog>
 }

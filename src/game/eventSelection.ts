@@ -24,7 +24,21 @@ export function conditionsMatch(conditions: readonly EventCondition[], state: Ga
 }
 
 export function availableEventChoices(event: GameEvent, state: GameState): EventChoice[] {
-  return event.choices.filter((choice) => conditionsMatch(choice.conditions ?? [], state))
+  return event.choices.filter((choice) => choiceUnavailableReason(choice, state) === null)
+}
+
+const fieldLabels = { energy: 'энергии', satiety: 'сытости', sanity: 'кукухи', money: 'денег', motivation: 'мотивации', unfinishedProjects: 'незаконченных проектов', day: 'дня', actionsRemaining: 'действий' } as const
+export function choiceUnavailableReason(choice: EventChoice, state: GameState): string | null {
+  for (const condition of choice.conditions ?? []) {
+    const value = state[condition.field]
+    if (condition.min !== undefined && value < condition.min) return `Нужно не менее ${condition.min}: ${fieldLabels[condition.field]}.`
+    if (condition.max !== undefined && value > condition.max) return `Нужно не более ${condition.max}: ${fieldLabels[condition.field]}.`
+  }
+  for (const field of ['money', 'unfinishedProjects'] as const) {
+    const change = choice.effects[field] ?? 0
+    if (change < 0 && state[field] < -change) return `Не хватает ${fieldLabels[field]}: нужно ${-change}.`
+  }
+  return null
 }
 
 /** Чистый отбор: не записывает ни показ, ни завершение. */

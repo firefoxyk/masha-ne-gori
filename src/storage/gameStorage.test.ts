@@ -76,8 +76,24 @@ describe('локальное сохранение', () => {
     expect(saveGame(action.state, () => storage, pending)).toBe(true)
     expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game: action.state, events: pending })
     const answered = chooseEvent(pending, action.state, 'review')
-    expect(saveGame(action.state, () => storage, answered)).toBe(true)
-    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game: action.state, events: answered })
+    expect(saveGame(answered.game, () => storage, answered.events)).toBe(true)
+    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', ...answered })
+  })
+
+  it.each(['open', 'answered'] as const)('безопасно открывает карточку версии 3: %s', (stage) => {
+    const action = performAction({ ...createInitialGameState(), ownedItems: ['pillow'] }, 'work')
+    let events = eventAfterAction(createEventSession(), action, 'work', () => 0)
+    if (stage === 'answered') events = chooseEvent(events, action.state, 'review').events
+    const pending = events.pending!
+    const raw = JSON.stringify({ version: 3, game: action.state, events: { ...events, pending: { eventId: pending.eventId, choiceId: pending.choiceId } } })
+    const storage = makeStorage(raw)
+    const loaded = loadGame(() => storage)
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') throw new Error('Сохранение не восстановлено')
+    expect(loaded.game).toEqual(action.state)
+    expect(loaded.events.pending).toEqual({ eventId: pending.eventId, choiceId: pending.choiceId, changes: null })
+    expect(storage.value()).toBe(raw)
+    expect(storage.setItem).not.toHaveBeenCalled()
   })
 
   it('распознаёт отсутствие сохранения без записи', () => {

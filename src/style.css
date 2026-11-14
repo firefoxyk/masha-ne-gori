@@ -194,3 +194,4 @@ progress { height: 7px; margin-top: 3px; }
 .event-quote { margin-top: 10px; padding: 10px; border-radius: 10px; background: #f8dfbd; }
 .event-note { margin-top: 12px; font-size: .9rem; }
 .event-dialog button { display: block; width: 100%; min-height: 48px; margin-top: 10px; padding: 10px; border: 2px solid #8f483e; border-radius: 12px; background: #a9554b; color: #fffaf0; font-weight: 700; cursor: pointer; }
+.event-dialog button:disabled { border-color: #bca68e; background: #e3d3bd; color: #665749; }
