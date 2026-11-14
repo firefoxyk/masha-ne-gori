@@ -1,4 +1,4 @@
-import { ACTIONS_PER_DAY, getDayValues } from './state'
+import { ACTIONS_PER_DAY, chooseProjectIdeas, getDayValues, nextProjectWaits } from './state'
 import type { DayValues, GameState } from './state'
 
 export interface DaySummary {
@@ -30,8 +30,9 @@ export function getDaySummary(state: GameState): DaySummary {
   }
 }
 
-export function startNextDay(state: GameState): GameState {
+export function startNextDay(state: GameState, random: () => number = Math.random): GameState {
   if (state.dayStatus !== 'finished') return state
+  const projectIdeas = chooseProjectIdeas({ ...state, day: state.day + 1 }, random)
   return {
     ...state,
     day: state.day + 1,
@@ -39,5 +40,7 @@ export function startNextDay(state: GameState): GameState {
     actionsRemaining: ACTIONS_PER_DAY,
     dayStart: getDayValues(state),
     dayEnd: null,
+    projectIdeas,
+    projectWaits: nextProjectWaits(state, projectIdeas),
   }
 }

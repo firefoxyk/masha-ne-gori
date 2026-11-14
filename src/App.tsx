@@ -3,8 +3,17 @@ import plantImage from './assets/room-items/plant.png'
 import pillowImage from './assets/room-items/pillow.png'
 import blanketImage from './assets/room-items/blanket.png'
 import lampImage from './assets/room-items/lamp.png'
+import vineImage from './assets/room-items/vine.png'
+import garlandImage from './assets/room-items/garland.png'
+import eggPillowImage from './assets/room-items/egg-pillow.png'
+import pillowSetImage from './assets/room-items/pillow-set.png'
+import nightstandImage from './assets/room-items/nightstand.png'
+import crystalLightImage from './assets/room-items/crystal-light.png'
+import wallPhotosImage from './assets/room-items/wall-photos.png'
+import windowPlantImage from './assets/room-items/window-plant.png'
 import { useEffect, useRef, useState } from 'react'
-import { STAT_MAX } from './game/state'
+import { PROJECT_IDS, STAT_MAX } from './game/state'
+import { nextProjectStory } from './game/projects'
 import { ACTIONS, getActionDescription, getActionUnavailableReason } from './game/actions'
 import type { ActionId } from './game/actions'
 import { getDaySummary } from './game/day'
@@ -79,9 +88,17 @@ export default function App() {
           <section className="room" aria-label="Комната Маши: временная иллюстрация">
             <div className="room-art">
               <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением; в дверь заглядывает гусь" />
+              {game.ownedItems.includes('vine') && <img className="room-item room-item-vine" src={vineImage} alt="Купленная свисающая лиана на стене" />}
+              {game.ownedItems.includes('garland') && <img className="room-item room-item-garland" src={garlandImage} alt="Купленная тёплая гирлянда у окна" />}
+              {game.ownedItems.includes('wall-photos') && <img className="room-item room-item-wall-photos" src={wallPhotosImage} alt="Купленные фотографии возле кровати" />}
+              {game.ownedItems.includes('window-plant') && <img className="room-item room-item-window-plant" src={windowPlantImage} alt="Купленное растение у окна" />}
               {game.ownedItems.includes('plant') && <img className="room-item room-item-plant" src={plantImage} alt="Купленное растение у стены" />}
+              {game.ownedItems.includes('nightstand') && <img className="room-item room-item-nightstand" src={nightstandImage} alt="Купленная прикроватная тумбочка" />}
+              {game.ownedItems.includes('nightstand') && game.ownedItems.includes('crystal-light') && <img className="room-item room-item-crystal-light" src={crystalLightImage} alt="Купленный ночник-кристалл на тумбочке" />}
               {game.ownedItems.includes('blanket') && <img className="room-item room-item-blanket" src={blanketImage} alt="Купленный плед на кровати" />}
               {game.ownedItems.includes('pillow') && <img className="room-item room-item-pillow" src={pillowImage} alt="Купленная подушка на кровати" />}
+              {game.ownedItems.includes('pillow-set') && <img className="room-item room-item-pillow-set" src={pillowSetImage} alt="Купленный набор подушек у изголовья" />}
+              {game.ownedItems.includes('egg-pillow') && <img className="room-item room-item-egg-pillow" src={eggPillowImage} alt="Купленная подушка-яичница на кровати" />}
               {game.ownedItems.includes('lamp') && <img className="room-item room-item-lamp" src={lampImage} alt="Купленная лампа на рабочем столе" />}
               <section className="speech" aria-label="Реплика Маши">
                 <p aria-live="polite">{message}</p>
@@ -131,7 +148,7 @@ export default function App() {
                 <p className="action-description" id="end-day-description">Можно закончить день в любой момент.</p>
               </div>
             </div>
-            <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши</button>
+            <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
           </section>}
         </div>
       </div>

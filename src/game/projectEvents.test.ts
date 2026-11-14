@@ -43,7 +43,7 @@ describe('идеи проектов в событиях', () => {
     expect(selectEvent([event], performed, action, createEventHistory(), () => 0)).toBe(event)
     const opened = shown(eventId, performed.state)
     const selected = chooseEvent(opened, performed.state, 'start')
-    expect(selected.game.projects[projectId]).toEqual({ status: 'started', step: 0 })
+    expect(selected.game.projects[projectId]).toMatchObject({ status: 'started', step: 0, story: { startDay: 1, seen: 0, actual: null } })
     expect(selected.game.actionsRemaining).toBe(performed.state.actionsRemaining - 1)
     expect(selected.game.unfinishedProjects).toBe(3)
     expect(genericProjects(selected.game)).toBe(2)
@@ -91,7 +91,7 @@ describe('идеи проектов в событиях', () => {
     const events = shown('assistant-report', game)
     const original = JSON.stringify({ version: 6, game, events })
     const store = { getItem: () => original, setItem: () => { throw new Error('нельзя перезаписать при чтении') } }
-    expect(loadGame(() => store)).toEqual({ kind: 'loaded', game, events })
+    expect(loadGame(() => store)).toEqual({ kind: 'loaded', game: { ...game, projectIdeas: expect.any(Object), projectWaits: {} }, events })
     expect(genericProjects(game)).toBe(3)
   })
 

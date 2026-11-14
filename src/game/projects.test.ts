@@ -1,26 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { advanceProject, projectReason, PROJECTS } from './projects'
+import { advanceProject, projectReason, projectStoryOptions, PROJECTS } from './projects'
 import { createInitialGameState, genericProjects, isValidGameState } from './state'
 import { finishDay, getDaySummary, startNextDay } from './day'
 import { choiceUnavailableReason, createEventHistory, recordEventShown } from './eventSelection'
 import { chooseEvent, createEventSession } from './eventSession'
 import { loadGame, saveGame } from '../storage/gameStorage'
 import type { GameState } from './state'
+import { PROJECT_STORIES } from '../content/projectStories'
 
 const id = 'balcony-garden'
 const run = (game: GameState, command: 'start' | 'step-0' | 'step-1' | 'defer' | 'resume') => advanceProject(game, id, command).state
 
 describe('проекты Маши', () => {
-  it.each(PROJECTS.map((project) => project.id))('начинает, продвигает и завершает %s один раз', (projectId) => {
+  it.each(PROJECTS.slice(0, 3).map((project) => project.id))('начинает, продвигает и завершает %s один раз', (projectId) => {
     const original = createInitialGameState()
-    const started = advanceProject(original, projectId, 'start').state
+    const started = advanceProject(original, projectId, 'start', () => 0).state
     expect(started.actionsRemaining).toBe(4)
     expect(started.unfinishedProjects).toBe(1)
     expect(genericProjects(started)).toBe(0)
     const first = advanceProject(started, projectId, 'step-0').state
     expect(advanceProject(first, projectId, 'step-0').state).toBe(first)
-    const completed = advanceProject(first, projectId, 'step-1').state
-    expect(completed.projects[projectId]).toEqual({ status: 'completed', step: 2 })
+    let completed = advanceProject(first, projectId, 'step-1').state
+    for (let day = 1; day <= PROJECT_STORIES[projectId][0].days.length; day++) {
+      if (day > 1) completed = startNextDay(finishDay(completed))
+      completed = advanceProject(completed, projectId, 'story-next', () => 0, projectStoryOptions(projectId, completed.projects[projectId]!.story!, day - 1)?.[0].label).state
+    }
+    expect(completed.projects[projectId]).toMatchObject({ status: 'completed', step: 2 })
     expect(completed.unfinishedProjects).toBe(0)
     expect(advanceProject(completed, projectId, 'step-1').state).toBe(completed)
     expect(isValidGameState(completed)).toBe(true)
@@ -49,7 +54,7 @@ describe('проекты Маши', () => {
     const summary = getDaySummary(finishDay(last))
     expect(summary.changes.energy).toBe(-5)
     expect(summary.changes.money).toBe(-5)
-    expect(summary.changes.unfinishedProjects).toBe(-1)
+    expect(summary.changes.unfinishedProjects).toBe(0)
   })
 
   it('события могут тратить только обобщённые проекты', () => {

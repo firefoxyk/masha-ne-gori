@@ -21,14 +21,27 @@ export const PRODUCTS = [
   { id: 'garland', name: 'Тёплая гирлянда', price: 80, effects: { sanity: 8, motivation: 5 }, immediate: '+8 кукухи, +5 мотивации', bonus: 'Нет', kind: 'item' },
   { id: 'sofa', name: 'Уютный диван', price: 160, effects: { sanity: 10, motivation: 5 }, immediate: '+10 кукухи, +5 мотивации', bonus: 'Отдых: +5 энергии', kind: 'item' },
   { id: 'bookshelf', name: 'Книжный шкаф', price: 150, effects: { sanity: 5, motivation: 10 }, immediate: '+5 кукухи, +10 мотивации', bonus: 'Нет', kind: 'item' },
+  { id: 'egg-pillow', name: 'Подушка-яичница', price: 35, effects: { sanity: 6, motivation: 3 }, immediate: '+6 кукухи, +3 мотивации', bonus: 'Нет', kind: 'item' },
+  { id: 'pillow-set', name: 'Набор подушек', price: 65, effects: { sanity: 8 }, immediate: '+8 кукухи', bonus: 'Нет', kind: 'item' },
+  { id: 'nightstand', name: 'Прикроватная тумбочка', price: 75, effects: { sanity: 4 }, immediate: '+4 кукухи', bonus: 'Нет', kind: 'item' },
+  { id: 'crystal-light', name: 'Ночник-кристалл', price: 55, effects: { sanity: 8, motivation: 3 }, immediate: '+8 кукухи, +3 мотивации', bonus: 'Нет', kind: 'item' },
+  { id: 'wall-photos', name: 'Фотографии на стене', price: 50, effects: { sanity: 5, motivation: 5 }, immediate: '+5 кукухи, +5 мотивации', bonus: 'Нет', kind: 'item' },
+  { id: 'window-plant', name: 'Растение у окна', price: 60, effects: { sanity: 7, motivation: 3 }, immediate: '+7 кукухи, +3 мотивации', bonus: 'Нет', kind: 'item' },
 ] as const satisfies readonly Product[]
 export type ProductId = typeof PRODUCTS[number]['id']
+
+// Для зависимых покупок можно добавить новые пары ID без изменения логики покупки.
+const prerequisites: Partial<Record<ProductId, { item: ItemId; reason: string }>> = {
+  'crystal-light': { item: 'nightstand', reason: 'Сначала нужна прикроватная тумбочка' },
+}
 
 export function purchaseReason(state: GameState, id: ProductId): string | null {
   const product = PRODUCTS.find((item) => item.id === id)
   if (!product) return 'Товар не найден.'
   if (state.dayStatus !== 'finished') return 'Магазин доступен после завершения дня.'
   if (product.kind === 'item' && state.ownedItems.includes(product.id as ItemId)) return 'Куплено'
+  const requirement = prerequisites[id]
+  if (requirement && !state.ownedItems.includes(requirement.item)) return requirement.reason
   if (product.kind === 'consumable' && state.consumablesBought >= CONSUMABLE_LIMIT) return 'Лимит расходуемых покупок на этот день исчерпан.'
   if (state.money < product.price) return `Не хватает монет: нужно ${product.price}.`
   return null

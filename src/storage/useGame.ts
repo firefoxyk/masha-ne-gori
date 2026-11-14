@@ -21,7 +21,7 @@ export function useGame() {
       events: loaded.kind === 'loaded' ? loaded.events : createEventSession(),
       message: loaded.kind === 'loaded' && loaded.game.dayStatus === 'finished' ? 'День завершён. Мы справились!' : initialMessage,
       storage: loaded.kind === 'invalid' ? 'invalid' as const : loaded.kind === 'unavailable' ? 'unavailable' as const : 'ready' as const,
-      revision: 0,
+      revision: loaded.kind === 'loaded' || loaded.kind === 'empty' ? 1 : 0,
     }
   })
   const [writeFailed, setWriteFailed] = useState(false)
@@ -47,8 +47,11 @@ export function useGame() {
     })
   }
   function handleNextDay() {
-    setView((current) => current.game.dayStatus !== 'finished' ? current : {
-      ...current, game: startNextDay(current.game), message: 'Новый день — новая возможность не забыть про обед.', revision: current.revision + 1,
+    const randomValues = Array.from({ length: 6 }, () => Math.random())
+    setView((current) => {
+      if (current.game.dayStatus !== 'finished') return current
+      let draw = 0
+      return { ...current, game: startNextDay(current.game, () => randomValues[draw++] ?? 0), message: 'Новый день — новая возможность не забыть про обед.', revision: current.revision + 1 }
     })
   }
   function handlePurchase(id: ProductId) {
@@ -57,16 +60,18 @@ export function useGame() {
       return result.success ? { ...current, game: result.state, revision: current.revision + 1 } : current
     })
   }
-  function handleProject(id: ProjectId, command: ProjectCommand) {
+  function handleProject(id: ProjectId, command: ProjectCommand, choice?: string) {
+    const random = Math.random()
     setView((current) => {
       if (current.events.pending) return current
-      const result = advanceProject(current.game, id, command)
+      const result = advanceProject(current.game, id, command, () => random, choice)
       return result.success ? { ...current, game: result.state, message: result.message, revision: current.revision + 1 } : current
     })
   }
   function handleEventChoice(choiceId: string) {
+    const random = Math.random()
     setView((current) => {
-      const result = chooseEvent(current.events, current.game, choiceId)
+      const result = chooseEvent(current.events, current.game, choiceId, () => random)
       return result.events === current.events ? current : { ...current, ...result, revision: current.revision + 1 }
     })
   }

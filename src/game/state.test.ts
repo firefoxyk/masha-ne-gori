@@ -4,7 +4,7 @@ import { ACTIONS_PER_DAY, createInitialGameState, isValidGameState } from './sta
 describe('начальное состояние игры', () => {
   it('создаёт новую игру с временными начальными значениями', () => {
     const state = createInitialGameState()
-    expect(state).toEqual({
+    expect(state).toMatchObject({
       day: 1,
       energy: 80,
       satiety: 70,

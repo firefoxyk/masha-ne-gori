@@ -25,13 +25,13 @@ export function eventAfterAction(session: EventSession, result: { state: GameSta
   return { history: recordEventShown(session.history, event.id, result.state.day), pending: { eventId: event.id, choiceId: null, changes: null } }
 }
 
-export function chooseEvent(session: EventSession, game: GameState, choiceId: string): { events: EventSession; game: GameState } {
+export function chooseEvent(session: EventSession, game: GameState, choiceId: string, random: () => number = Math.random): { events: EventSession; game: GameState } {
   const unchanged = { events: session, game }
   if (!session.pending || session.pending.choiceId !== null) return unchanged
   const event = exampleEvents.find((item) => item.id === session.pending!.eventId)
   const choice: EventChoice | undefined = event?.choices.find((item) => item.id === choiceId)
   if (!event || !choice || choiceUnavailableReason(choice, game)) return unchanged
-  const started = choice.projectStart ? advanceProject(game, choice.projectStart, 'start') : null
+  const started = choice.projectStart ? advanceProject(game, choice.projectStart, 'start', random) : null
   if (started && !started.success) return unchanged
   const next = { ...(started?.state ?? game) }
   const changes: EventChanges = {}

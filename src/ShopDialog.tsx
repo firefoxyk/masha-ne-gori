@@ -6,7 +6,7 @@ import type { ProductId } from './game/shop'
 
 const categories = [
   { name: 'Вкусняшки', icon: '🍪', ids: ['treat', 'dinner', 'drink', 'box'] },
-  { name: 'Уют', icon: '🌿', ids: ['plant', 'vine', 'garland', 'pillow', 'blanket', 'chair', 'sofa', 'bookshelf'] },
+  { name: 'Уют', icon: '🌿', ids: ['plant', 'vine', 'garland', 'pillow', 'blanket', 'egg-pillow', 'pillow-set', 'nightstand', 'crystal-light', 'wall-photos', 'window-plant', 'chair', 'sofa', 'bookshelf'] },
   { name: 'Удобство', icon: '☕', ids: ['mug', 'lamp', 'monitor'] },
 ] as const satisfies readonly { name: string; icon: string; ids: readonly ProductId[] }[]
 

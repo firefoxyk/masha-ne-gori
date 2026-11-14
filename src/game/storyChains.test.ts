@@ -14,7 +14,7 @@ const event = (id: string): GameEvent => {
   if (!found) throw new Error(`Событие ${id} не найдено`)
   return found
 }
-const initial = (): GameState => ({ ...createInitialGameState(), day: 2, ownedItems: ['pillow'] })
+const initial = (): GameState => { const state = createInitialGameState(); return { ...state, day: 2, projectIdeas: { ...state.projectIdeas, day: 2 }, ownedItems: ['pillow'] } }
 const storage = () => {
   let value: string | null = null
   return { getItem: () => value, setItem: (_key: string, next: string) => { value = next } }
@@ -52,7 +52,7 @@ describe('истории с продолжением', () => {
     expect(has(session.history, 3, nextId)).toBe(true)
     expect(has(session.history, 6, nextId)).toBe(true)
     expect(has(session.history, 3, otherId)).toBe(false)
-    game = { ...game, day: 3 }
+    game = { ...game, day: 3, projectIdeas: { ...game.projectIdeas, day: 3 } }
     session = { history: recordEventShown(session.history, nextId, game.day), pending: { eventId: nextId, choiceId: null, changes: null } }
     expect(eligibleEvents([other, event('work-list')], game, 'work', session.history)).toEqual([])
     expect(saveGame(game, () => saved, session)).toBe(true)

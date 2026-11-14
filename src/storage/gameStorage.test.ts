@@ -40,7 +40,7 @@ describe('локальное сохранение', () => {
     const { dayEnd: _dayEnd, ownedItems: _ownedItems, consumablesBought: _consumablesBought, ...legacy } = original
     const raw = JSON.stringify({ version: 1, game: legacy })
     const storage = makeStorage(raw)
-    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game: original, events: createEventSession() })
+    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game: { ...original, projectIdeas: expect.any(Object), projectWaits: {} }, events: createEventSession() })
     expect(storage.value()).toBe(raw)
     expect(storage.setItem).not.toHaveBeenCalled()
   })
@@ -64,7 +64,7 @@ describe('локальное сохранение', () => {
     const game = { ...createInitialGameState(), ownedItems: ['pillow'] as const, money: 40 }
     const raw = JSON.stringify({ version: 2, game })
     const storage = makeStorage(raw)
-    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game, events: createEventSession() })
+    expect(loadGame(() => storage)).toEqual({ kind: 'loaded', game: { ...game, projectIdeas: expect.any(Object), projectWaits: {} }, events: createEventSession() })
     expect(storage.value()).toBe(raw)
   })
 
@@ -90,7 +90,7 @@ describe('локальное сохранение', () => {
     const loaded = loadGame(() => storage)
     expect(loaded.kind).toBe('loaded')
     if (loaded.kind !== 'loaded') throw new Error('Сохранение не восстановлено')
-    expect(loaded.game).toEqual(action.state)
+    expect(loaded.game).toEqual({ ...action.state, projectIdeas: expect.any(Object), projectWaits: {} })
     expect(loaded.events.pending).toEqual({ eventId: pending.eventId, choiceId: pending.choiceId, changes: null })
     expect(storage.value()).toBe(raw)
     expect(storage.setItem).not.toHaveBeenCalled()

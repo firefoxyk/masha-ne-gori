@@ -4,6 +4,8 @@ import { finishDay, getDaySummary, startNextDay } from './day'
 import { getActionDescription, performAction } from './actions'
 import { PRODUCTS, purchase, purchaseReason } from './shop'
 import { loadGame, saveGame } from '../storage/gameStorage'
+import { createEventSession } from './eventSession'
+import { recordEventShown, recordEventCompleted } from './eventSelection'
 
 const richDay = () => finishDay({ ...createInitialGameState(), money: 1000, energy: 40, satiety: 40, sanity: 40, motivation: 40 })
 
@@ -73,7 +75,7 @@ describe('магазин', () => {
     expect(performAction({ ...all, energy: 90 }, 'rest').state.energy).toBe(100)
   })
   it.each(PRODUCTS)('покупает $name с указанной ценой и эффектом', (product) => {
-    const before = richDay()
+    const before = product.id === 'crystal-light' ? { ...richDay(), ownedItems: ['nightstand' as const] } : richDay()
     const snapshot = structuredClone(before)
     const result = purchase(before, product.id)
     expect(result.success).toBe(true)
@@ -86,6 +88,56 @@ describe('магазин', () => {
     expect(result.state.actionsRemaining).toBe(before.actionsRemaining)
     if (product.kind === 'item') expect(result.state.ownedItems).toContain(product.id)
     else expect(result.state.consumablesBought).toBe(1)
+  })
+
+  it.each([
+    ['egg-pillow', 35, 6, 3], ['pillow-set', 65, 8, 0], ['nightstand', 75, 4, 0],
+    ['crystal-light', 55, 8, 3], ['wall-photos', 50, 5, 5], ['window-plant', 60, 7, 3],
+  ] as const)('покупает новую постоянную вещь %s за %i один раз', (id, price, sanity, motivation) => {
+    const initial = richDay()
+    const start = id === 'crystal-light' ? { ...initial, ownedItems: ['nightstand' as const] } : initial
+    const result = purchase(start, id)
+    expect(result.success).toBe(true)
+    expect(result.state.money).toBe(start.money - price)
+    expect(result.state.sanity).toBe(start.sanity + sanity)
+    expect(result.state.motivation).toBe(start.motivation + motivation)
+    expect(result.state.consumablesBought).toBe(0)
+    expect(result.state.ownedItems).toContain(id)
+    expect(purchase(result.state, id)).toEqual({ state: result.state, success: false })
+    const poor = { ...start, money: price - 1 }
+    expect(purchase(poor, id)).toEqual({ state: poor, success: false })
+    const capped = purchase({ ...start, sanity: 99, motivation: 99 }, id).state
+    expect(capped.sanity).toBe(100)
+    expect(capped.motivation).toBe(Math.min(100, 99 + motivation))
+  })
+
+  it('проверяет тумбочку перед покупкой ночника и не расходует деньги при отказе', () => {
+    const before = richDay()
+    expect(purchaseReason(before, 'crystal-light')).toBe('Сначала нужна прикроватная тумбочка')
+    expect(purchase(before, 'crystal-light')).toEqual({ state: before, success: false })
+    const table = purchase(before, 'nightstand').state
+    expect(purchaseReason(table, 'crystal-light')).toBeNull()
+    expect(purchase(table, 'crystal-light').success).toBe(true)
+    expect(purchaseReason({ ...table, money: 0 }, 'crystal-light')).toContain('Не хватает монет')
+  })
+
+  it('сохраняет новые покупки и итоги, не теряя проекты и историю события', () => {
+    const finished = richDay()
+    const summary = getDaySummary(finished)
+    let game = { ...finished, unfinishedProjects: 1, projects: { 'balcony-garden': { status: 'started' as const, step: 1 } } }
+    for (const id of ['nightstand', 'crystal-light', 'egg-pillow', 'pillow-set', 'wall-photos', 'window-plant'] as const) game = purchase(game, id).state as typeof game
+    let raw: string | null = null
+    const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value } }
+    const base = createEventSession()
+    const events = { ...base, history: recordEventCompleted(recordEventShown(base.history, 'goose-note', 1), 'goose-note') }
+    expect(saveGame(game, () => storage, events)).toBe(true)
+    const loaded = loadGame(() => storage)
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') throw new Error('Сохранение не восстановлено')
+    expect(loaded.game).toEqual(game)
+    expect(loaded.events).toEqual(events)
+    expect(getDaySummary(loaded.game)).toEqual(summary)
+    expect(purchase(loaded.game, 'crystal-light').success).toBe(false)
   })
 
   it('не списывает деньги при нехватке, повторной покупке и в активном дне', () => {

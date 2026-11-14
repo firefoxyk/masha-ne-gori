@@ -115,14 +115,30 @@ progress { height: 7px; margin-top: 3px; }
 .resources dd { margin: 0; font-size: .9rem; }
 .room { flex: 1; min-height: 175px; display: flex; align-items: center; justify-content: center; border-radius: 5px 5px 0 0; border-bottom: 0; box-shadow: none; }
 .room-art { position: relative; flex: 0 1 auto; height: 100%; min-height: 0; min-width: 0; max-height: 100%; max-width: 100%; aspect-ratio: 1122 / 1402; }
+/* Размер сцены соответствует реальному рисунку, когда по ширине остаются поля. */
+@supports (container-type: size) {
+  .room { container-type: size; }
+  .room-art { width: min(100%, 80.0285cqh); height: auto; }
+}
 .room img { width: 100%; height: 100%; object-fit: contain; }
 .room-art .room-item { position: absolute; height: auto; pointer-events: none; }
+.room-item-vine { width: 19% !important; left: -1%; top: 15%; }
+.room-item-garland { width: 30% !important; left: 5%; top: 7.5%; transform: rotate(-32deg); filter: drop-shadow(0 0 1px #ffdc80cc); }
 .room-item-plant { width: 24% !important; left: 39%; top: 28.5%; }
 .room-item-blanket { width: 24% !important; left: 3%; top: 32%; }
 .room-item-pillow { width: 25% !important; left: 20.5%; top: 27.5%; }
-.room-item-lamp { width: 16% !important; left: 68.5%; top: 63.5%; }
+.room-item-wall-photos { width: 17% !important; left: 42%; top: 22%; }
+.room-item-window-plant { width: 14% !important; left: 12%; top: 20%; }
+.room-item-nightstand { width: 17% !important; left: 35%; top: 36%; }
+.room-item-crystal-light { width: 12% !important; left: 37.5%; top: 34%; }
+.room-item-pillow-set { width: 16% !important; left: 26%; top: 28%; }
+.room-item-egg-pillow { width: 14% !important; left: 17%; top: 34%; }
+.room-item-lamp { width: 11.5% !important; left: 73%; top: 62.8%; }
 .speech { position: absolute; z-index: 1; top: 10%; left: 26%; max-width: 70%; display: block; padding: 7px 10px; border: 2px solid #a86c4c; border-radius: 13px; background: #fff7e8; color: #493125; box-shadow: 0 2px 0 #b78966; font-size: clamp(.72rem, 3vw, .9rem); line-height: 1.25; overflow-wrap: anywhere; }
 .speech::after { content: ''; position: absolute; bottom: -10px; left: 75%; width: 12px; height: 12px; background: #fff7e8; border-right: 2px solid #a86c4c; border-bottom: 2px solid #a86c4c; transform: rotate(35deg); }
+@media (max-height: 700px) {
+  .speech { top: 0; left: 25%; max-width: 75%; }
+}
 .actions { padding: 9px 10px 11px; border-radius: 0 0 15px 15px; }
 .actions-count { margin: 0 0 6px; text-align: center; font-size: .8rem; }
 .action-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
