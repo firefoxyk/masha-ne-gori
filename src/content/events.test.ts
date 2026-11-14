@@ -3,6 +3,7 @@ import { exampleEvents } from './events'
 import { performAction } from '../game/actions'
 import { availableEventChoices, createEventHistory, eligibleEvents, recordEventShown } from '../game/eventSelection'
 import { validateEvents } from '../game/events'
+import type { GameEvent } from '../game/events'
 import { createInitialGameState } from '../game/state'
 
 describe('стартовая подборка историй', () => {
@@ -30,7 +31,7 @@ describe('стартовая подборка историй', () => {
 
   it('скрывает платные варианты при нехватке денег, сохраняя альтернативу', () => {
     const broke = { ...createInitialGameState(), money: 0, satiety: 30 }
-    for (const event of exampleEvents.filter((item) => item.choices.some((choice) => 'money' in choice.effects && choice.effects.money < 0))) {
+    for (const event of (exampleEvents as readonly GameEvent[]).filter((item) => item.choices.some((choice) => (choice.effects.money ?? 0) < 0))) {
       const available = availableEventChoices(event, broke)
       expect(available.length).toBeGreaterThan(0)
       expect(available.every((choice) => (choice.effects.money ?? 0) >= 0)).toBe(true)

@@ -1,5 +1,5 @@
-import { ACTIONS_PER_DAY, STAT_MAX, STAT_MIN } from './state.ts'
-import type { DayValues } from './state.ts'
+import { ACTIONS_PER_DAY, PROJECT_IDS, STAT_MAX, STAT_MIN } from './state.ts'
+import type { DayValues, ProjectId } from './state.ts'
 import type { ActionId } from './actions.ts'
 
 /** Данные события пока не выбираются и не применяются игровой логикой. */
@@ -13,6 +13,7 @@ export interface EventChoice {
   effects: EventEffects
   result: string
   conditions?: EventCondition[]
+  projectStart?: ProjectId
 }
 export interface GameEvent {
   id: string
@@ -23,6 +24,7 @@ export interface GameEvent {
   conditions: EventCondition[]
   repeat: 'once' | 'repeatable'
   continuation?: { eventId: string; choiceId: string; minDays: number }
+  requiresIdea?: ProjectId
   choices: [EventChoice, ...EventChoice[]]
 }
 
@@ -85,6 +87,7 @@ export function validateEvents(input: unknown): string[] {
     if (!record(event.trigger) || (event.trigger.type !== 'state' && (event.trigger.type !== 'after_action' || !['work', 'eat', 'rest'].includes(event.trigger.action as string)))) error(`${path}.trigger`, 'неизвестный момент события')
     conditions(event.conditions, `${path}.conditions`)
     if (event.repeat !== 'once' && event.repeat !== 'repeatable') error(`${path}.repeat`, 'неизвестное правило повторения')
+    if (event.requiresIdea !== undefined && !PROJECT_IDS.includes(event.requiresIdea as ProjectId)) error(`${path}.requiresIdea`, 'неизвестный проект')
     if (event.continuation !== undefined) {
       const link = event.continuation
       if (!record(link) || typeof link.eventId !== 'string' || !idPattern.test(link.eventId) || typeof link.choiceId !== 'string' || !idPattern.test(link.choiceId) || !Number.isSafeInteger(link.minDays) || (link.minDays as number) < 1) error(`${path}.continuation`, 'некорректная связь')
@@ -99,6 +102,10 @@ export function validateEvents(input: unknown): string[] {
       text(choice.text, `${at}.text`); text(choice.result, `${at}.result`)
       effects(choice.effects, `${at}.effects`)
       if (choice.conditions !== undefined) conditions(choice.conditions, `${at}.conditions`)
+      if (choice.projectStart !== undefined) {
+        if (!PROJECT_IDS.includes(choice.projectStart as ProjectId) || choice.projectStart !== event.requiresIdea) error(`${at}.projectStart`, 'нужен известный проект, указанный в requiresIdea')
+        if (record(choice.effects) && choice.effects.unfinishedProjects !== undefined) error(`${at}.effects`, 'начало проекта само меняет число проектов')
+      }
     })
   })
   input.forEach((event: unknown, index: number) => {

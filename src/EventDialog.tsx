@@ -26,7 +26,7 @@ export default function EventDialog({ pending, game, onChoose, onContinue, saveP
     {choice ? <section aria-labelledby="event-result-title">
       <h3 id="event-result-title" tabIndex={-1} ref={resultRef}>Результат</h3>
       <p>{choice.result}</p>
-      {pending.changes === null ? <p className="event-note">Этот выбор сделан в предыдущей версии, когда последствия ещё не применялись.</p> : Object.keys(pending.changes).length === 0 ? <p className="event-note">Показатели не изменились.</p> : <div className="event-note"><p>Изменения:</p><ul>{Object.entries(pending.changes).map(([field, amount]) => <li key={field}>{({ energy: 'Энергия', satiety: 'Сытость', sanity: 'Кукуха', motivation: 'Мотивация', money: 'Деньги', unfinishedProjects: 'Незаконченные проекты' } as Record<string, string>)[field]}: {amount > 0 ? '+' : ''}{amount}</li>)}</ul></div>}
+      {pending.changes === null ? <p className="event-note">Этот выбор сделан в предыдущей версии, когда последствия ещё не применялись.</p> : Object.keys(pending.changes).length === 0 ? <p className="event-note">Показатели не изменились.</p> : <div className="event-note"><p>Изменения:</p><ul>{Object.entries(pending.changes).map(([field, amount]) => <li key={field}>{({ energy: 'Энергия', satiety: 'Сытость', sanity: 'Кукуха', motivation: 'Мотивация', money: 'Деньги', unfinishedProjects: 'Незаконченные проекты', actionsRemaining: 'Осталось действий' } as Record<string, string>)[field]}: {amount > 0 ? '+' : ''}{amount}</li>)}</ul></div>}
       <button type="button" onClick={onContinue}>Продолжить игру</button>
     </section> : <section aria-labelledby="event-choice-title">
       <h3 id="event-choice-title">Что выберет Маша?</h3>

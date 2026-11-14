@@ -171,6 +171,39 @@ export const exampleEvents = [
     choices: [{ id: 'check', text: 'Проверить список', effects: { energy: -3, sanity: 3 }, result: 'Маша исправила список. Проверка заняла немного сил.' }],
   },
   {
+    id: 'idea-garden', title: 'Зелень с характером',
+    text: 'После отдыха Маша заметила пустой горшок и вспомнила о «Зелёном уголке» из списка идей.',
+    dialogue: [{ speaker: 'Маша', text: 'Интересно, растения тоже составляют планы на понедельник?' }],
+    trigger: { type: 'after_action', action: 'rest' }, conditions: [], repeat: 'once', requiresIdea: 'balcony-garden',
+    choices: [
+      { id: 'start', text: 'Начать «Зелёный уголок» — 1 действие', projectStart: 'balcony-garden', effects: {}, result: 'Маша начала «Зелёный уголок». Следующий шаг ждёт в разделе проектов.' },
+      { id: 'later', text: 'Оставить идею в списке на потом — бесплатно', effects: {}, result: '«Зелёный уголок» по-прежнему ждёт в доступных идеях.' },
+      { id: 'decline', text: 'Пока не заниматься этим — бесплатно', effects: {}, result: 'Маша решила не спешить. Идея остаётся в списке на случай, если настроение изменится.' },
+    ],
+  },
+  {
+    id: 'idea-recipes', title: 'Рецепт на память',
+    text: 'После еды Маша вспомнила о своей идее собрать простые рецепты.',
+    dialogue: [{ speaker: 'Маша', text: 'Первый рецепт: не забыть, что поставила чайник.' }],
+    trigger: { type: 'after_action', action: 'eat' }, conditions: [], repeat: 'once', requiresIdea: 'recipe-book',
+    choices: [
+      { id: 'start', text: 'Начать «Книгу простых рецептов» — 1 действие', projectStart: 'recipe-book', effects: {}, result: 'Маша начала «Книгу простых рецептов». Следующий шаг ждёт в разделе проектов.' },
+      { id: 'later', text: 'Оставить идею в списке на потом — бесплатно', effects: {}, result: '«Книга простых рецептов» остаётся в списке доступных идей.' },
+      { id: 'decline', text: 'Пока не заниматься этим — бесплатно', effects: {}, result: 'Маша решила пока не собирать рецепты. Идея никуда не исчезла из списка.' },
+    ],
+  },
+  {
+    id: 'idea-postcard', title: 'Почта хорошего настроения',
+    text: 'Закончив работу, Маша вспомнила идею открытки для соседа.',
+    dialogue: [{ speaker: 'Маша', text: 'Пожалуй, это письмо не потребует трёх согласований.' }],
+    trigger: { type: 'after_action', action: 'work' }, conditions: [], repeat: 'once', requiresIdea: 'cozy-corner',
+    choices: [
+      { id: 'start', text: 'Начать «Открытку для соседа» — 1 действие', projectStart: 'cozy-corner', effects: {}, result: 'Маша начала «Открытку для соседа». Следующий шаг ждёт в разделе проектов.' },
+      { id: 'later', text: 'Оставить идею в списке на потом — бесплатно', effects: {}, result: '«Открытка для соседа» остаётся в списке доступных идей.' },
+      { id: 'decline', text: 'Пока не заниматься этим — бесплатно', effects: {}, result: 'Маша решила повременить. Вернуться к идее можно в списке проектов.' },
+    ],
+  },
+  {
     id: 'assistant-break', title: 'Совет для отдыха',
     text: 'Помощник предложил отдыхать по расписанию и приложил расписание на десять страниц.',
     dialogue: [{ speaker: 'Помощник', text: 'Первый пункт — прочесть инструкцию.' }], trigger: { type: 'state' }, conditions: [], repeat: 'once',

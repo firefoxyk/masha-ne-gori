@@ -4,10 +4,14 @@ import type { EventHistory } from './eventSelection.ts'
 import type { ActionId } from './actions.ts'
 import { STAT_MAX, STAT_MIN } from './state.ts'
 import type { DayValues, GameState } from './state.ts'
+import { advanceProject } from './projects.ts'
+import type { EventChoice } from './events.ts'
+
+type EventChanges = Partial<DayValues> & { actionsRemaining?: number }
 
 export interface EventSession {
   history: EventHistory
-  pending: { eventId: string; choiceId: string | null; changes: Partial<DayValues> | null } | null
+  pending: { eventId: string; choiceId: string | null; changes: EventChanges | null } | null
 }
 
 export function createEventSession(): EventSession {
@@ -25,18 +29,21 @@ export function chooseEvent(session: EventSession, game: GameState, choiceId: st
   const unchanged = { events: session, game }
   if (!session.pending || session.pending.choiceId !== null) return unchanged
   const event = exampleEvents.find((item) => item.id === session.pending!.eventId)
-  const choice = event?.choices.find((item) => item.id === choiceId)
+  const choice: EventChoice | undefined = event?.choices.find((item) => item.id === choiceId)
   if (!event || !choice || choiceUnavailableReason(choice, game)) return unchanged
-  const next = { ...game }
-  const changes: Partial<DayValues> = {}
+  const started = choice.projectStart ? advanceProject(game, choice.projectStart, 'start') : null
+  if (started && !started.success) return unchanged
+  const next = { ...(started?.state ?? game) }
+  const changes: EventChanges = {}
   const fields: (keyof DayValues)[] = ['energy', 'satiety', 'sanity', 'motivation', 'money', 'unfinishedProjects']
   for (const field of fields) {
     const delta = (choice.effects as Partial<DayValues>)[field] ?? 0
     const max = field === 'money' ? Number.MAX_VALUE : field === 'unfinishedProjects' ? Number.MAX_SAFE_INTEGER : STAT_MAX
-    next[field] = Math.min(max, Math.max(STAT_MIN, game[field] + delta))
+    next[field] = Math.min(max, Math.max(STAT_MIN, next[field] + delta))
     const actual = next[field] - game[field]
     if (actual !== 0) changes[field] = actual
   }
+  if (next.actionsRemaining !== game.actionsRemaining) changes.actionsRemaining = next.actionsRemaining - game.actionsRemaining
   return { game: next, events: { history: recordEventCompleted(session.history, event.id, choiceId, game.day), pending: { eventId: event.id, choiceId, changes } } }
 }
 
@@ -67,6 +74,12 @@ export function isValidEventSession(value: unknown, game: GameState): value is E
   if (!event || h.shownDay !== game.day || h.lastShownByEvent[event.id] !== game.day) return false
   const changes = value.pending.changes
   if (value.pending.choiceId === null) return changes === null && (!h.completedEventIds.includes(event.id) || event.repeat === 'repeatable')
-  if (changes !== null && (!record(changes) || !Object.entries(changes).every(([field, delta]) => ['energy', 'satiety', 'sanity', 'motivation', 'money', 'unfinishedProjects'].includes(field) && typeof delta === 'number' && Number.isFinite(delta) && (field !== 'unfinishedProjects' || Number.isSafeInteger(delta))))) return false
-  return typeof value.pending.choiceId === 'string' && event.choices.some((choice) => choice.id === (value.pending as { choiceId: string }).choiceId) && h.completedEventIds.includes(event.id)
+  if (changes !== null && (!record(changes) || !Object.entries(changes).every(([field, delta]) => ['energy', 'satiety', 'sanity', 'motivation', 'money', 'unfinishedProjects', 'actionsRemaining'].includes(field) && typeof delta === 'number' && Number.isFinite(delta) && (!['unfinishedProjects', 'actionsRemaining'].includes(field) || Number.isSafeInteger(delta))))) return false
+  const selected: EventChoice | undefined = event.choices.find((choice) => choice.id === (value.pending as { choiceId: string }).choiceId)
+  if (!selected || !h.completedEventIds.includes(event.id)) return false
+  if (selected.projectStart) {
+    const project = game.projects[selected.projectStart]
+    return project?.status === 'started' && project.step === 0 && record(changes) && changes.actionsRemaining === -1 && changes.unfinishedProjects === 1
+  }
+  return !record(changes) || changes.actionsRemaining === undefined
 }

@@ -2,6 +2,7 @@ import type { ActionId } from './actions.ts'
 import type { EventChoice, EventCondition, GameEvent } from './events.ts'
 import type { GameState } from './state.ts'
 import { genericProjects } from './state.ts'
+import { projectReason } from './projects.ts'
 
 // Временные настройки для будущих игровых проб.
 export const EVENT_RULES = { chance: 0.5, maxPerDay: 1, repeatCooldownDays: 2 } as const
@@ -30,6 +31,10 @@ export function availableEventChoices(event: GameEvent, state: GameState): Event
 
 const fieldLabels = { energy: 'энергии', satiety: 'сытости', sanity: 'кукухи', money: 'денег', motivation: 'мотивации', unfinishedProjects: 'незаконченных проектов', day: 'дня', actionsRemaining: 'действий' } as const
 export function choiceUnavailableReason(choice: EventChoice, state: GameState): string | null {
+  if (choice.projectStart) {
+    const reason = projectReason(state, choice.projectStart, 'start')
+    if (reason) return reason
+  }
   for (const condition of choice.conditions ?? []) {
     const value = state[condition.field]
     if (condition.min !== undefined && value < condition.min) return `Нужно не менее ${condition.min}: ${fieldLabels[condition.field]}.`
@@ -47,6 +52,7 @@ export function choiceUnavailableReason(choice: EventChoice, state: GameState): 
 export function eligibleEvents(events: readonly GameEvent[], state: GameState, action: ActionId, history: EventHistory): GameEvent[] {
   if (state.dayStatus !== 'active' || (history.shownDay === state.day && history.shownCount >= EVENT_RULES.maxPerDay)) return []
   return events.filter((event) => {
+    if (event.requiresIdea && state.projects[event.requiresIdea]) return false
     if (event.continuation) {
       const previous = history.completedChoices[event.continuation.eventId]
       if (!previous || previous.choiceId !== event.continuation.choiceId || state.day - previous.day < event.continuation.minDays) return false

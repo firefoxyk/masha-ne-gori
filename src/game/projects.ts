@@ -1,5 +1,5 @@
-import { STAT_MAX } from './state'
-import type { GameState, ProjectId } from './state'
+import { STAT_MAX } from './state.ts'
+import type { GameState, ProjectId } from './state.ts'
 
 type Step = { text: string; energy: number; money: number }
 type Project = { id: ProjectId; title: string; description: string; steps: [Step, Step]; reward: { money: number; motivation: number; sanity: number }; message: string }
