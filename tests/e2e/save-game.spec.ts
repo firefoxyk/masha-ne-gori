@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures.ts'
 import { SAVE_KEY } from '../../src/storage/gameStorage.ts'
 
 test('восстанавливает игру посреди дня и после его завершения', async ({ page }) => {
@@ -34,7 +34,7 @@ for (const raw of ['{', JSON.stringify({ version: 999, game: {} })]) {
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)).toBe(raw)
     await page.getByRole('button', { name: 'Начать новую игру' }).click()
     await expect(page.getByText('День 1', { exact: true })).toBeVisible()
-    await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').version, SAVE_KEY)).toBe(1)
+    await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').version, SAVE_KEY)).toBe(3)
   })
 }
 

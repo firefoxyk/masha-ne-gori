@@ -4,6 +4,9 @@ export const STAT_MAX = 100
 export const ACTIONS_PER_DAY = 5
 
 export type DayStatus = 'active' | 'finished'
+export const ITEM_IDS = ['plant', 'pillow', 'mug', 'blanket', 'chair', 'lamp', 'monitor', 'vine', 'garland', 'sofa', 'bookshelf'] as const
+export type ItemId = typeof ITEM_IDS[number]
+export const CONSUMABLE_LIMIT = 2
 
 export interface DayValues {
   energy: number
@@ -19,6 +22,9 @@ export interface GameState extends DayValues {
   dayStatus: DayStatus
   actionsRemaining: number
   dayStart: DayValues
+  dayEnd: DayValues | null
+  ownedItems: ItemId[]
+  consumablesBought: number
 }
 
 export function getDayValues(state: DayValues): DayValues {
@@ -41,6 +47,9 @@ export function createInitialGameState(): GameState {
     dayStatus: 'active',
     actionsRemaining: ACTIONS_PER_DAY,
     dayStart: { ...values },
+    dayEnd: null,
+    ownedItems: [],
+    consumablesBought: 0,
   }
 }
 
@@ -59,6 +68,9 @@ export function isValidGameState(state: GameState): boolean {
     isValidDayValues(state) && isValidDayValues(state.dayStart) &&
     Number.isSafeInteger(state.day) && state.day >= 1 &&
     (state.dayStatus === 'active' || state.dayStatus === 'finished') &&
+    (state.dayStatus === 'active' ? state.dayEnd === null : !!state.dayEnd && isValidDayValues(state.dayEnd)) &&
+    Array.isArray(state.ownedItems) && state.ownedItems.every((id) => ITEM_IDS.includes(id)) && new Set(state.ownedItems).size === state.ownedItems.length &&
+    Number.isInteger(state.consumablesBought) && state.consumablesBought >= 0 && state.consumablesBought <= CONSUMABLE_LIMIT &&
     Number.isInteger(state.actionsRemaining) &&
     state.actionsRemaining >= 0 && state.actionsRemaining <= ACTIONS_PER_DAY
   )

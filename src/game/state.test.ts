@@ -15,6 +15,9 @@ describe('начальное состояние игры', () => {
       dayStatus: 'active',
       actionsRemaining: 5,
       dayStart: { energy: 80, satiety: 70, sanity: 80, money: 100, motivation: 70, unfinishedProjects: 0 },
+      dayEnd: null,
+      ownedItems: [],
+      consumablesBought: 0,
     })
     expect(isValidGameState(state)).toBe(true)
   })
@@ -40,6 +43,7 @@ describe('границы состояния', () => {
       unfinishedProjects: 0,
       actionsRemaining: 0,
       dayStatus: 'finished',
+      dayEnd: createInitialGameState().dayStart,
     })).toBe(true)
   })
 

@@ -1,6 +1,6 @@
-import { ACTIONS_PER_DAY, STAT_MAX, STAT_MIN } from './state'
-import type { DayValues } from './state'
-import type { ActionId } from './actions'
+import { ACTIONS_PER_DAY, STAT_MAX, STAT_MIN } from './state.ts'
+import type { DayValues } from './state.ts'
+import type { ActionId } from './actions.ts'
 
 /** Данные события пока не выбираются и не применяются игровой логикой. */
 export type EventNumberField = keyof DayValues | 'day' | 'actionsRemaining'

@@ -10,11 +10,11 @@ export interface DaySummary {
 
 export function finishDay(state: GameState): GameState {
   if (state.dayStatus !== 'active') return state
-  return { ...state, dayStatus: 'finished' }
+  return { ...state, dayStatus: 'finished', dayEnd: getDayValues(state), consumablesBought: 0 }
 }
 
 export function getDaySummary(state: GameState): DaySummary {
-  const endValues = getDayValues(state)
+  const endValues = getDayValues(state.dayEnd ?? state)
   return {
     day: state.day,
     actionsUsed: ACTIONS_PER_DAY - state.actionsRemaining,
@@ -38,5 +38,6 @@ export function startNextDay(state: GameState): GameState {
     dayStatus: 'active',
     actionsRemaining: ACTIONS_PER_DAY,
     dayStart: getDayValues(state),
+    dayEnd: null,
   }
 }

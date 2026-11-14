@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures.ts'
 import { createInitialGameState, STAT_MAX } from '../../src/game/state.ts'
 import { SAVE_KEY } from '../../src/storage/gameStorage.ts'
 
@@ -146,6 +146,8 @@ test('ранние итоги доступны с клавиатуры и вос
   await expect(summary.getByRole('heading')).not.toBeFocused()
   expect(await page.evaluate(() => window.scrollY)).toBe(0)
   await summary.getByRole('heading').focus()
+  await page.keyboard.press('Tab')
+  await expect(summary.getByRole('button', { name: 'Заглянуть в магазин' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(summary.getByRole('button', { name: 'Начать следующий день' })).toBeFocused()
   await page.keyboard.press('Enter')

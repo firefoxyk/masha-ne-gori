@@ -1,4 +1,4 @@
-import type { GameEvent } from '../game/events'
+import type { GameEvent } from '../game/events.ts'
 
 // Черновые истории для проверки формата; игра пока их не использует.
 export const exampleEvents = [

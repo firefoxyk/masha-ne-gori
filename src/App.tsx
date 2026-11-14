@@ -1,19 +1,29 @@
 import roomImage from './assets/starter-room.webp'
+import plantImage from './assets/room-items/plant.png'
+import pillowImage from './assets/room-items/pillow.png'
+import blanketImage from './assets/room-items/blanket.png'
+import lampImage from './assets/room-items/lamp.png'
 import { useEffect, useRef, useState } from 'react'
 import { STAT_MAX } from './game/state'
-import { ACTIONS, getActionUnavailableReason } from './game/actions'
+import { ACTIONS, getActionDescription, getActionUnavailableReason } from './game/actions'
 import type { ActionId } from './game/actions'
 import { getDaySummary } from './game/day'
 import { getDetailedStateWarnings } from './game/warnings'
 import { useGame } from './storage/useGame'
 import DaySummaryPanel from './DaySummaryDialog'
+import ShopDialog from './ShopDialog'
+import EventDialog from './EventDialog'
 
 export default function App() {
-  const { game, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleEventChoice, handleEventContinue, startNewGame } = useGame()
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [openWarning, setOpenWarning] = useState<string | null>(null)
+  const [shopOpen, setShopOpen] = useState(false)
   const returnFocus = useRef(false)
   const focusSummary = useRef(false)
+  function nextDay() { setShopOpen(false); focusSummary.current = false; returnFocus.current = true; handleNextDay() }
+  function closeShop() { setShopOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.shop-open')?.focus()) }
+  function closeEvent() { handleEventContinue(); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()) }
   useEffect(() => {
     if (returnFocus.current && game.dayStatus === 'active') {
       returnFocus.current = false
@@ -67,6 +77,10 @@ export default function App() {
           <section className="room" aria-label="Комната Маши: временная иллюстрация">
             <div className="room-art">
               <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением; в дверь заглядывает гусь" />
+              {game.ownedItems.includes('plant') && <img className="room-item room-item-plant" src={plantImage} alt="Купленное растение у стены" />}
+              {game.ownedItems.includes('blanket') && <img className="room-item room-item-blanket" src={blanketImage} alt="Купленный плед на кровати" />}
+              {game.ownedItems.includes('pillow') && <img className="room-item room-item-pillow" src={pillowImage} alt="Купленная подушка на кровати" />}
+              {game.ownedItems.includes('lamp') && <img className="room-item room-item-lamp" src={lampImage} alt="Купленная лампа на рабочем столе" />}
               <section className="speech" aria-label="Реплика Маши">
                 <p aria-live="polite">{message}</p>
               </section>
@@ -96,7 +110,7 @@ export default function App() {
             {selectedWarning && <div className="warning-detail" id="warning-detail"><p>{selectedWarning.text}</p><button type="button" onClick={closeWarning}>Понятно</button></div>}
           </section>
 
-          {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={() => { focusSummary.current = false; returnFocus.current = true; handleNextDay() }} /> : <section className="panel actions" aria-labelledby="actions-title">
+          {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} /> : <section className="panel actions" aria-labelledby="actions-title">
             <h2 className="visually-hidden" id="actions-title">Чем займёмся?</h2>
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
@@ -106,7 +120,7 @@ export default function App() {
                 return (
                   <div className="action-item" key={id}>
                     <button type="button" disabled={reason !== null} aria-describedby={commonReason ? 'common-reason' : `${id}-description`} onClick={() => { setOpenWarning(null); handleAction(id) }}><span className="action-icon" aria-hidden="true">{id === 'work' ? '💻' : id === 'eat' ? '🥣' : '☁'}</span>{ACTIONS[id].label}</button>
-                    {!commonReason && <p className="action-description" id={`${id}-description`}>{reason ?? ACTIONS[id].description}</p>}
+                    {!commonReason && <p className="action-description" id={`${id}-description`}>{reason ?? getActionDescription(game, id)}</p>}
                   </div>
                 )
               })}
@@ -118,6 +132,8 @@ export default function App() {
           </section>}
         </div>
       </div>
+      {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {events.pending && <EventDialog pending={events.pending} game={game} onChoose={handleEventChoice} onContinue={closeEvent} saveProblem={storage === 'unavailable' || writeFailed} />}
     </main>
   )
 }

@@ -1,6 +1,6 @@
-import type { ActionId } from './actions'
-import type { EventChoice, EventCondition, GameEvent } from './events'
-import type { GameState } from './state'
+import type { ActionId } from './actions.ts'
+import type { EventChoice, EventCondition, GameEvent } from './events.ts'
+import type { GameState } from './state.ts'
 
 // Временные настройки для будущих игровых проб.
 export const EVENT_RULES = { chance: 0.5, maxPerDay: 1, repeatCooldownDays: 2 } as const

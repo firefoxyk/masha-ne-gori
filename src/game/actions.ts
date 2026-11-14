@@ -1,5 +1,6 @@
-import { STAT_MAX, STAT_MIN } from './state'
-import type { GameState } from './state'
+import { STAT_MAX, STAT_MIN } from './state.ts'
+import type { GameState } from './state.ts'
+import { bonuses } from './shop.ts'
 
 export type ActionId = 'work' | 'eat' | 'rest'
 
@@ -18,6 +19,13 @@ export function getActionUnavailableReason(state: GameState, action: ActionId): 
   return null
 }
 
+export function getActionDescription(state: GameState, action: ActionId): string {
+  const bonus = bonuses(state)
+  if (action === 'work') return `+${30 + bonus.work} денег, −15 энергии, −10 сытости`
+  if (action === 'eat') return `−25 денег, +${30 + bonus.eat} сытости`
+  return `+${20 + bonus.rest} энергии, +10 кукухи`
+}
+
 function clampStat(value: number): number {
   return Math.max(STAT_MIN, Math.min(STAT_MAX, value))
 }
@@ -29,16 +37,16 @@ export function performAction(state: GameState, action: ActionId): { state: Game
   const next = { ...state, actionsRemaining: state.actionsRemaining - 1 }
   switch (action) {
     case 'work':
-      next.money += 30
+      next.money += 30 + bonuses(state).work
       next.energy = clampStat(next.energy - 15)
       next.satiety = clampStat(next.satiety - 10)
       break
     case 'eat':
       next.money -= 25
-      next.satiety = clampStat(next.satiety + 30)
+      next.satiety = clampStat(next.satiety + 30 + bonuses(state).eat)
       break
     case 'rest':
-      next.energy = clampStat(next.energy + 20)
+      next.energy = clampStat(next.energy + 20 + bonuses(state).rest)
       next.sanity = clampStat(next.sanity + 10)
       break
   }
