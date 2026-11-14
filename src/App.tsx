@@ -13,12 +13,14 @@ import { useGame } from './storage/useGame'
 import DaySummaryPanel from './DaySummaryDialog'
 import ShopDialog from './ShopDialog'
 import EventDialog from './EventDialog'
+import ProjectsDialog from './ProjectsDialog'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleEventChoice, handleEventContinue, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleEventChoice, handleEventContinue, startNewGame } = useGame()
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [openWarning, setOpenWarning] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
+  const [projectsOpen, setProjectsOpen] = useState(false)
   const returnFocus = useRef(false)
   const focusSummary = useRef(false)
   function nextDay() { setShopOpen(false); focusSummary.current = false; returnFocus.current = true; handleNextDay() }
@@ -129,11 +131,13 @@ export default function App() {
                 <p className="action-description" id="end-day-description">Можно закончить день в любой момент.</p>
               </div>
             </div>
+            <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши</button>
           </section>}
         </div>
       </div>
       {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage === 'unavailable' || writeFailed} />}
       {events.pending && <EventDialog pending={events.pending} game={game} onChoose={handleEventChoice} onContinue={closeEvent} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {projectsOpen && <ProjectsDialog game={game} message={message} onCommand={handleProject} onClose={() => { setProjectsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.projects-open')?.focus()) }} />}
     </main>
   )
 }

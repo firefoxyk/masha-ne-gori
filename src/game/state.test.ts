@@ -18,6 +18,7 @@ describe('начальное состояние игры', () => {
       dayEnd: null,
       ownedItems: [],
       consumablesBought: 0,
+      projects: {},
     })
     expect(isValidGameState(state)).toBe(true)
   })

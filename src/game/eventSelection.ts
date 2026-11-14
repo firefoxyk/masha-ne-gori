@@ -1,6 +1,7 @@
 import type { ActionId } from './actions.ts'
 import type { EventChoice, EventCondition, GameEvent } from './events.ts'
 import type { GameState } from './state.ts'
+import { genericProjects } from './state.ts'
 
 // Временные настройки для будущих игровых проб.
 export const EVENT_RULES = { chance: 0.5, maxPerDay: 1, repeatCooldownDays: 2 } as const
@@ -36,7 +37,8 @@ export function choiceUnavailableReason(choice: EventChoice, state: GameState): 
   }
   for (const field of ['money', 'unfinishedProjects'] as const) {
     const change = choice.effects[field] ?? 0
-    if (change < 0 && state[field] < -change) return `Не хватает ${fieldLabels[field]}: нужно ${-change}.`
+    const available = field === 'unfinishedProjects' ? genericProjects(state) : state[field]
+    if (change < 0 && available < -change) return field === 'unfinishedProjects' ? `Не хватает обобщённых незаконченных проектов: нужно ${-change}. Именованные проекты можно завершить только в их карточках.` : `Не хватает ${fieldLabels[field]}: нужно ${-change}.`
   }
   return null
 }

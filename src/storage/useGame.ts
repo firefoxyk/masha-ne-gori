@@ -7,6 +7,9 @@ import { loadGame, saveGame } from './gameStorage'
 import { purchase } from '../game/shop'
 import type { ProductId } from '../game/shop'
 import { chooseEvent, continueEvent, createEventSession, eventAfterAction } from '../game/eventSession'
+import { advanceProject } from '../game/projects'
+import type { ProjectCommand } from '../game/projects'
+import type { ProjectId } from '../game/state'
 
 const initialMessage = 'Сегодня всё получится. А если нет — сначала поедим.'
 
@@ -54,6 +57,13 @@ export function useGame() {
       return result.success ? { ...current, game: result.state, revision: current.revision + 1 } : current
     })
   }
+  function handleProject(id: ProjectId, command: ProjectCommand) {
+    setView((current) => {
+      if (current.events.pending) return current
+      const result = advanceProject(current.game, id, command)
+      return result.success ? { ...current, game: result.state, message: result.message, revision: current.revision + 1 } : current
+    })
+  }
   function handleEventChoice(choiceId: string) {
     setView((current) => {
       const result = chooseEvent(current.events, current.game, choiceId)
@@ -70,5 +80,5 @@ export function useGame() {
     setView((current) => ({ ...current, game: createInitialGameState(), events: createEventSession(), message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
   }
 
-  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleEventChoice, handleEventContinue, startNewGame, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleEventChoice, handleEventContinue, startNewGame, writeFailed }
 }

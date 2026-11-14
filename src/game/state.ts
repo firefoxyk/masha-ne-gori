@@ -7,6 +7,9 @@ export type DayStatus = 'active' | 'finished'
 export const ITEM_IDS = ['plant', 'pillow', 'mug', 'blanket', 'chair', 'lamp', 'monitor', 'vine', 'garland', 'sofa', 'bookshelf'] as const
 export type ItemId = typeof ITEM_IDS[number]
 export const CONSUMABLE_LIMIT = 2
+export const PROJECT_IDS = ['balcony-garden', 'recipe-book', 'cozy-corner'] as const
+export type ProjectId = typeof PROJECT_IDS[number]
+export type ProjectProgress = { status: 'started' | 'deferred' | 'completed'; step: number }
 
 export interface DayValues {
   energy: number
@@ -25,6 +28,11 @@ export interface GameState extends DayValues {
   dayEnd: DayValues | null
   ownedItems: ItemId[]
   consumablesBought: number
+  projects: Partial<Record<ProjectId, ProjectProgress>>
+}
+
+export function genericProjects(state: GameState): number {
+  return state.unfinishedProjects - Object.values(state.projects).filter((project) => project?.status === 'started' || project?.status === 'deferred').length
 }
 
 export function getDayValues(state: DayValues): DayValues {
@@ -50,6 +58,7 @@ export function createInitialGameState(): GameState {
     dayEnd: null,
     ownedItems: [],
     consumablesBought: 0,
+    projects: {},
   }
 }
 
@@ -64,6 +73,7 @@ function isValidDayValues(values: DayValues): boolean {
 
 // Проверяет допустимость данных состояния.
 export function isValidGameState(state: GameState): boolean {
+  const projects = state.projects
   return (
     isValidDayValues(state) && isValidDayValues(state.dayStart) &&
     Number.isSafeInteger(state.day) && state.day >= 1 &&
@@ -71,6 +81,9 @@ export function isValidGameState(state: GameState): boolean {
     (state.dayStatus === 'active' ? state.dayEnd === null : !!state.dayEnd && isValidDayValues(state.dayEnd)) &&
     Array.isArray(state.ownedItems) && state.ownedItems.every((id) => ITEM_IDS.includes(id)) && new Set(state.ownedItems).size === state.ownedItems.length &&
     Number.isInteger(state.consumablesBought) && state.consumablesBought >= 0 && state.consumablesBought <= CONSUMABLE_LIMIT &&
+    !!projects && typeof projects === 'object' && !Array.isArray(projects) &&
+    Object.entries(projects).every(([id, progress]) => PROJECT_IDS.includes(id as ProjectId) && !!progress && typeof progress === 'object' && ['started', 'deferred', 'completed'].includes(progress.status) && Number.isInteger(progress.step) && (progress.status === 'completed' ? progress.step === 2 : progress.step >= 0 && progress.step < 2)) &&
+    genericProjects(state) >= 0 &&
     Number.isInteger(state.actionsRemaining) &&
     state.actionsRemaining >= 0 && state.actionsRemaining <= ACTIONS_PER_DAY
   )
