@@ -66,8 +66,12 @@ dd { margin: 3px 0 0; font-weight: 750; font-size: 1.2rem; }
 .actions .section-heading { margin-bottom: 8px; }
 .actions-count { color: #674e51; font-size: .9rem; margin-bottom: 14px; }
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.action-grid button { min-height: 48px; padding: 9px 10px; border: 1px solid #dfd1c9; border-radius: 12px; background: #f4eeea; color: #705f60; font-weight: 650; cursor: not-allowed; }
-.actions-note { margin-top: 12px; color: #705c5d; font-size: .82rem; }
+.action-item { min-width: 0; }
+.action-grid button { width: 100%; min-height: 48px; padding: 9px 10px; border: 1px solid #a35857; border-radius: 12px; background: #ad6060; color: #fff; font-weight: 650; cursor: pointer; }
+.action-grid button:disabled { border-color: #dfd1c9; background: #f4eeea; color: #705f60; cursor: not-allowed; }
+.action-grid button:focus-visible { outline: 3px solid #593746; outline-offset: 2px; }
+.action-description { margin: 5px 2px 8px; color: #705c5d; font-size: .78rem; }
+.day-finished { margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #e7efe2; color: #344d35; font-weight: 650; }
 footer { margin-top: 22px; text-align: center; color: #796465; font-size: .78rem; }
 
 @media (max-width: 700px) {

@@ -31,7 +31,7 @@ export function createInitialGameState(): GameState {
   }
 }
 
-// Проверяет границы данных; применение и изменение состояния появятся позже.
+// Проверяет допустимость данных состояния.
 export function isValidGameState(state: GameState): boolean {
   const stats = [state.energy, state.satiety, state.sanity, state.motivation]
   return (
