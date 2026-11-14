@@ -40,9 +40,10 @@ describe('отбор событий после действия', () => {
     const history = createEventHistory()
     const first = vi.fn().mockReturnValueOnce(0.499).mockReturnValueOnce(0)
     const last = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0.999)
-    expect(selectEvent(exampleEvents, success, 'work', history, first)).toBe(work)
-    expect(selectEvent(exampleEvents, success, 'work', history, last)).toBe(goose)
-    expect(selectEvent(exampleEvents, success, 'work', history, () => 0.5)).toBeNull()
+    const candidates = [work, hunger, goose]
+    expect(selectEvent(candidates, success, 'work', history, first)).toBe(work)
+    expect(selectEvent(candidates, success, 'work', history, last)).toBe(goose)
+    expect(selectEvent(candidates, success, 'work', history, () => 0.5)).toBeNull()
     expect(EVENT_RULES.chance).toBe(0.5)
     expect(() => selectEvent([work], success, 'work', history, () => 1)).toThrow(RangeError)
   })

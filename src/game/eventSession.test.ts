@@ -28,7 +28,7 @@ describe('состояние карточки события', () => {
   it('не показывает неподходящее событие и блокирует продолжение до выбора', () => {
     const start = createEventSession()
     const action = performAction(createInitialGameState(), 'rest')
-    expect(eventAfterAction(start, action, 'rest', () => 0)).toBe(start)
+    expect(eventAfterAction(start, { ...action, success: false }, 'rest', () => 0)).toBe(start)
     const work = performAction(createInitialGameState(), 'work')
     const shown = eventAfterAction(start, work, 'work', () => 0)
     expect(continueEvent(shown)).toBe(shown)
