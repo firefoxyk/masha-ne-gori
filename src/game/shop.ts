@@ -2,7 +2,7 @@ import { CONSUMABLE_LIMIT, STAT_MAX } from './state.ts'
 import type { GameState, ItemId } from './state.ts'
 
 type Effects = { satiety?: number; sanity?: number; motivation?: number }
-type Product = { id: string; name: string; price: number; effects: Effects; immediate: string; bonus: string; kind: 'consumable' | 'item' }
+type Product = { id: string; name: string; price: number; effects: Effects; immediate: string; bonus: string; kind: 'consumable' | 'item'; description?: string }
 
 // Цены и эффекты — временные значения для игровых проб.
 export const PRODUCTS = [
@@ -15,6 +15,7 @@ export const PRODUCTS = [
   { id: 'mug', name: 'Любимая кружка', price: 75, effects: { sanity: 5, motivation: 5 }, immediate: '+5 кукухи, +5 мотивации', bonus: 'Еда: +3 сытости', kind: 'item' },
   { id: 'blanket', name: 'Уютный плед', price: 100, effects: { sanity: 8 }, immediate: '+8 кукухи', bonus: 'Отдых: +5 энергии', kind: 'item' },
   { id: 'chair', name: 'Удобное кресло', price: 180, effects: { sanity: 10, motivation: 10 }, immediate: '+10 кукухи, +10 мотивации', bonus: 'Отдых: +7 энергии', kind: 'item' },
+  { id: 'rocking-chair', name: 'Кресло-качалка', price: 350, effects: { sanity: 12 }, immediate: '+12 кукухи', bonus: 'Нет', kind: 'item', description: 'Место для уютной паузы без созвонов.' },
   { id: 'lamp', name: 'Настольная лампа', price: 90, effects: { motivation: 5 }, immediate: '+5 мотивации', bonus: 'Работа: +3 монеты', kind: 'item' },
   { id: 'monitor', name: 'Второй монитор', price: 200, effects: { motivation: 10 }, immediate: '+10 мотивации', bonus: 'Работа: +6 монет', kind: 'item' },
   { id: 'vine', name: 'Свисающая лиана', price: 70, effects: { sanity: 8, motivation: 3 }, immediate: '+8 кукухи, +3 мотивации', bonus: 'Нет', kind: 'item' },

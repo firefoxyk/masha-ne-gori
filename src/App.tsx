@@ -13,6 +13,7 @@ import wallPhotosImage from './assets/room-items/wall-photos.png'
 import windowPlantImage from './assets/room-items/window-plant.png'
 import bookshelfImage from './assets/room-items/bookshelf-proposal.png'
 import sofaImage from './assets/room-items/sofa.png'
+import rockingChairImage from './assets/room-items/rocking-chair.png'
 import { useEffect, useRef, useState } from 'react'
 import { PROJECT_IDS, STAT_MAX } from './game/state'
 import { nextProjectStory } from './game/projects'
@@ -99,6 +100,7 @@ export default function App() {
             <div className={`room-art${game.ownedItems.includes('bookshelf') ? ' room-has-bookshelf' : ''}${message.length > 90 ? ' room-long-speech' : ''}`}>
               <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением; в дверь заглядывает гусь" />
               {hasSofa(game) && <img className="room-item room-item-sofa" src={sofaImage} alt="Уютный диван в комнате" />}
+              {game.ownedItems.includes('rocking-chair') && <img className="room-item room-item-rocking-chair" src={rockingChairImage} alt="Купленное кресло-качалка в комнате" />}
               {game.ownedItems.includes('bookshelf') && <img className="room-item room-item-bookshelf" src={bookshelfImage} alt="Купленный книжный шкаф у стены" />}
               {game.ownedItems.includes('vine') && <img className="room-item room-item-vine" src={vineImage} alt="Купленная свисающая лиана на стене" />}
               {game.ownedItems.includes('garland') && <img className="room-item room-item-garland" src={garlandImage} alt="Купленная тёплая гирлянда у окна" />}

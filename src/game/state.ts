@@ -9,7 +9,7 @@ export const STAT_MAX = 100
 export const ACTIONS_PER_DAY = 5
 
 export type DayStatus = 'active' | 'finished'
-export const ITEM_IDS = ['plant', 'pillow', 'mug', 'blanket', 'chair', 'lamp', 'monitor', 'vine', 'garland', 'sofa', 'bookshelf', 'egg-pillow', 'pillow-set', 'nightstand', 'crystal-light', 'wall-photos', 'window-plant'] as const
+export const ITEM_IDS = ['plant', 'pillow', 'mug', 'blanket', 'chair', 'lamp', 'monitor', 'vine', 'garland', 'sofa', 'bookshelf', 'egg-pillow', 'pillow-set', 'nightstand', 'crystal-light', 'wall-photos', 'window-plant', 'rocking-chair'] as const
 export type ItemId = typeof ITEM_IDS[number]
 export const CONSUMABLE_LIMIT = 2
 export const PROJECT_IDS = ['balcony-garden', 'recipe-book', 'cozy-corner', 'ideal-sofa', 'train-assistant', 'goose-owner'] as const

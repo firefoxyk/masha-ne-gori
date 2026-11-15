@@ -10,6 +10,31 @@ import { recordEventShown, recordEventCompleted } from './eventSelection'
 const richDay = () => finishDay({ ...createInitialGameState(), money: 1000, energy: 40, satiety: 40, sanity: 40, motivation: 40 })
 
 describe('магазин', () => {
+  it('продаёт кресло-качалку один раз и восстанавливает покупку и прежние вещи', () => {
+    const old = { ...richDay(), ownedItems: ['lamp'] as const }
+    let raw = JSON.stringify({ version: 19, game: old, events: createEventSession() })
+    const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value } }
+    const loaded = loadGame(() => storage)
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') throw new Error('Старая версия не загружена')
+    const poor = { ...loaded.game, money: 349 }
+    expect(purchaseReason(poor, 'rocking-chair')).toBe('Не хватает монет: нужно 350.')
+    expect(purchase(poor, 'rocking-chair')).toEqual({ state: poor, success: false })
+    const bought = purchase(loaded.game, 'rocking-chair')
+    expect(bought.success).toBe(true)
+    expect(bought.state.money).toBe(650)
+    expect(bought.state.sanity).toBe(52)
+    expect(bought.state.consumablesBought).toBe(0)
+    expect(bought.state.ownedItems).toEqual(['lamp', 'rocking-chair'])
+    expect(purchase(bought.state, 'rocking-chair')).toEqual({ state: bought.state, success: false })
+    expect(saveGame(bought.state, () => storage, loaded.events)).toBe(true)
+    const restored = loadGame(() => storage)
+    expect(restored.kind).toBe('loaded')
+    if (restored.kind !== 'loaded') throw new Error('Покупка не восстановлена')
+    expect(restored.game).toEqual(bought.state)
+    expect(purchaseReason(restored.game, 'rocking-chair')).toBe('Куплено')
+    expect(purchase({ ...loaded.game, sanity: 99 }, 'rocking-chair').state.sanity).toBe(100)
+  })
   it('сохраняет старые вещи без дубликатов и с исходными характеристиками', () => {
     const expected = [
       ['plant', 45, { sanity: 8, motivation: 5 }, 'Нет'],
