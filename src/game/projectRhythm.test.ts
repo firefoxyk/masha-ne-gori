@@ -1,11 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import { longStory } from '../content/projectStoriesV2'
-import { advanceProject, nextProjectStory } from './projects'
+import { advanceProject, nextProjectStory, projectNextStoryDay } from './projects'
 import { chooseProjectIdeas, createInitialGameState, nextProjectWaits, PROJECT_IDS } from './state'
 import { finishDay, startNextDay } from './day'
 import { loadGame, saveGame } from '../storage/gameStorage'
 
 describe('ритм проектов', () => {
+  it('показывает срок продолжения, учитывает пропущенные дни и отложенные проекты', () => {
+    let game = createInitialGameState()
+    expect(projectNextStoryDay(game, 'train-assistant')).toBeNull()
+    game = advanceProject(game, 'train-assistant', 'start', () => 0).state
+    expect(projectNextStoryDay(game, 'train-assistant')).toBe(1)
+    game = advanceProject(game, 'train-assistant', 'story-next').state
+    expect(projectNextStoryDay(game, 'train-assistant')).toBe(3)
+    expect(nextProjectStory(game, 'train-assistant')).toBeNull()
+    game = advanceProject(game, 'train-assistant', 'defer').state
+    expect(projectNextStoryDay(game, 'train-assistant')).toBe(3)
+    game = startNextDay(finishDay(game), () => 0)
+    game = startNextDay(finishDay(game), () => 0)
+    expect(nextProjectStory(game, 'train-assistant')).toBeNull()
+    game = advanceProject(game, 'train-assistant', 'resume').state
+    expect(nextProjectStory(game, 'train-assistant')).toBeTruthy()
+  })
   it('даёт приоритет идее, пропущенной три дня, и сохраняет подборку', () => {
     let game = createInitialGameState(() => 0.99)
     const id = PROJECT_IDS.find((item) => !game.projectIdeas.ids.includes(item))!

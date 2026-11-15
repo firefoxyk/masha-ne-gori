@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PROJECTS, nextProjectStory, projectReason, projectStoryLength, projectStoryOptions, projectStoryText } from './game/projects'
+import { PROJECTS, nextProjectStory, projectNextStoryDay, projectReason, projectStoryLength, projectStoryOptions, projectStoryText } from './game/projects'
 import type { ProjectCommand } from './game/projects'
 import { genericProjects, projectLimit } from './game/state'
 import type { GameState, ProjectId } from './game/state'
@@ -55,6 +55,7 @@ export default function ProjectsDialog({ game, message, onCommand, onClose, assi
           const status = progress?.status ?? 'idea'
           const story = progress?.story
           const available = nextProjectStory(game, project.id)
+          const nextDay = projectNextStoryDay(game, project.id)
           const command: ProjectCommand = status === 'idea' ? 'start' : status === 'completed' ? 'restart' : status === 'deferred' ? 'resume' : progress?.step === 1 ? 'step-1' : 'step-0'
           const step = progress && progress.step < project.steps.length ? project.steps[progress.step] : null
           const canCommand = group.id === 'completed' ? project.id === 'train-assistant' && ambiguousTraining(game) : status !== 'started' || !!step
@@ -77,7 +78,7 @@ export default function ProjectsDialog({ game, message, onCommand, onClose, assi
               {project.id === 'train-assistant' && group.id === 'completed' && ambiguousTraining(game) && <p>В старом сохранении не осталось подтверждения прохождения истории обучения. Можно пройти её сейчас; прежние записи сохранятся.</p>}
               {group.id === 'idea' && <p>Продолжительность: {project.id === 'ideal-sofa' ? 'около 10' : project.id === 'train-assistant' ? 'около 12' : project.id === 'goose-owner' ? 'около 13' : '3–5'} игровых дней. {projectLimit(project.id) === 1 ? 'Одноразовый проект; предстоит несколько решений.' : 'Повторяемый проект; иногда нужно заглянуть в историю.'} Начало стоит 1 действие и добавит один незаконченный проект.</p>}
               <p>Состояние: {status === 'idea' ? 'идея' : status === 'started' ? 'начат' : status === 'deferred' ? 'отложен' : 'завершён'}; шагов выполнено {progress?.step ?? 0} из {project.steps.length}.</p>
-              {story && <p>Игровой день истории: {game.day - story.startDay + 1}. {status === 'deferred' ? 'Проект отложен; события подождут.' : available ? 'Появилось новое событие.' : status === 'started' ? 'Ждём продолжения.' : 'История завершена.'}</p>}
+              {story && <p>Игровой день истории: {game.day - story.startDay + 1}. {status === 'deferred' ? 'Проект отложен; события подождут.' : available ? 'Появилось новое событие.' : status === 'started' && nextDay !== null && nextDay > game.day ? `Следующий эпизод — не раньше дня ${nextDay}.` : status === 'started' ? 'Ждём продолжения.' : 'История завершена.'}</p>}
               {story && story.seen > 0 && <p>История: {projectStoryText(project.id, story, story.seen - 1)} {previousChoice?.response}</p>}
               {status === 'completed' && (story ? actual && <p>Изменения: {actual}.</p> : legacyResult ? <><p>Маша: «{legacyResult.message}»</p>{legacyActual && <p>Изменения: {legacyActual}.</p>}</> : <p>Подробности прежнего завершения не сохранились.</p>)}
               {available && <>{choices ? <><p>{available}</p>{choices.map((item, index) => {

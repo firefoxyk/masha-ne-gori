@@ -44,12 +44,19 @@ export function projectStoryText(id: ProjectId, story: ProjectStoryProgress, ind
   const ending = final ? ` ${script.days[script.days.length - 1]} ${longStoryDetail(id, story.choices, true)}` : ''
   return context + style + episodes[index].text + ending
 }
+/** Дата следующего эпизода; его финал также может требовать выполнения шагов. */
+export function projectNextStoryDay(game: GameState, id: ProjectId): number | null {
+  const progress = game.projects[id]
+  const story = progress?.story
+  if (!story || progress.status === 'completed' || story.seen >= projectStoryLength(id, story)) return null
+  const due = story.edition === 2 ? longStory(id)![story.seen].day : story.seen + 1
+  return story.startDay + due - 1
+}
 export function nextProjectStory(game: GameState, id: ProjectId): string | null {
   const progress = game.projects[id]
   const story = progress?.story
   if (!story || progress.status !== 'started' || story.seen >= projectStoryLength(id, story)) return null
-  const due = story.edition === 2 ? longStory(id)![story.seen].day : story.seen + 1
-  if (story.startDay + due - 1 > game.day) return null
+  if (projectNextStoryDay(game, id)! > game.day) return null
   return projectStoryText(id, story, story.seen)
 }
 export function projectReason(game: GameState, id: ProjectId, command: ProjectCommand): string | null {
