@@ -14,6 +14,7 @@ import windowPlantImage from './assets/room-items/window-plant.png'
 import bookshelfImage from './assets/room-items/bookshelf-proposal.png'
 import sofaImage from './assets/room-items/sofa.png'
 import rockingChairImage from './assets/room-items/rocking-chair.png'
+import mugImage from './assets/room-items/favorite-mug.png'
 import { useEffect, useRef, useState } from 'react'
 import { PROJECT_IDS, STAT_MAX } from './game/state'
 import { nextProjectStory } from './game/projects'
@@ -114,6 +115,7 @@ export default function App() {
               {game.ownedItems.includes('pillow-set') && <img className="room-item room-item-pillow-set" src={pillowSetImage} alt="Купленный набор подушек у изголовья" />}
               {game.ownedItems.includes('egg-pillow') && <img className="room-item room-item-egg-pillow" src={eggPillowImage} alt="Купленная подушка-яичница на кровати" />}
               {game.ownedItems.includes('lamp') && <img className="room-item room-item-lamp" src={lampImage} alt="Купленная лампа на рабочем столе" />}
+              {game.ownedItems.includes('mug') && <img className="room-item room-item-mug" src={mugImage} alt="Купленная любимая кружка на рабочем столе" />}
               <section className="speech" aria-label="Реплика Маши">
                 <p aria-live="polite">{message}</p>
               </section>
