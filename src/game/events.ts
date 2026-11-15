@@ -1,5 +1,5 @@
-import { ACTIONS_PER_DAY, PROJECT_IDS, STAT_MAX, STAT_MIN } from './state.ts'
-import type { DayValues, ProjectId } from './state.ts'
+import { ACTIONS_PER_DAY, ITEM_IDS, PROJECT_IDS, STAT_MAX, STAT_MIN } from './state.ts'
+import type { DayValues, ItemId, ProjectId } from './state.ts'
 import type { ActionId } from './actions.ts'
 
 /** Данные события пока не выбираются и не применяются игровой логикой. */
@@ -25,6 +25,7 @@ export interface GameEvent {
   repeat: 'once' | 'repeatable'
   continuation?: { eventId: string; choiceId: string; minDays: number }
   requiresIdea?: ProjectId
+  requiresItem?: ItemId
   choices: [EventChoice, ...EventChoice[]]
 }
 
@@ -88,6 +89,7 @@ export function validateEvents(input: unknown): string[] {
     conditions(event.conditions, `${path}.conditions`)
     if (event.repeat !== 'once' && event.repeat !== 'repeatable') error(`${path}.repeat`, 'неизвестное правило повторения')
     if (event.requiresIdea !== undefined && !PROJECT_IDS.includes(event.requiresIdea as ProjectId)) error(`${path}.requiresIdea`, 'неизвестный проект')
+    if (event.requiresItem !== undefined && !ITEM_IDS.includes(event.requiresItem as ItemId)) error(`${path}.requiresItem`, 'неизвестный предмет')
     if (event.continuation !== undefined) {
       const link = event.continuation
       if (!record(link) || typeof link.eventId !== 'string' || !idPattern.test(link.eventId) || typeof link.choiceId !== 'string' || !idPattern.test(link.choiceId) || !Number.isSafeInteger(link.minDays) || (link.minDays as number) < 1) error(`${path}.continuation`, 'некорректная связь')

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CONSUMABLE_LIMIT } from './game/state'
 import type { GameState } from './game/state'
 import { PRODUCTS, purchaseReason } from './game/shop'
@@ -14,6 +14,16 @@ const categories = [
 export default function ShopDialog({ game, onPurchase, onClose, onNextDay, saveProblem }: { game: GameState; onPurchase: (id: ProductId) => void; onClose: () => void; onNextDay: () => void; saveProblem: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
+  const previousGame = useRef(game)
+  const [chairReaction, setChairReaction] = useState<string | null>(null)
+  const chair = PRODUCTS.find((product) => product.id === 'rocking-chair')!
+  useEffect(() => {
+    const previous = previousGame.current
+    if (!previous.ownedItems.includes('rocking-chair') && game.ownedItems.includes('rocking-chair')) {
+      setChairReaction(`Маша: «Кажется, у отдыха теперь есть своё место». Кукуха: +${game.sanity - previous.sanity}.`)
+    }
+    previousGame.current = game
+  }, [game])
   useEffect(() => {
     const element = dialog.current
     if (!element) return
@@ -31,6 +41,8 @@ export default function ShopDialog({ game, onPurchase, onClose, onNextDay, saveP
         </div>
         <p>Сейчас: сытость {game.satiety}, кукуха {game.sanity}, мотивация {game.motivation}.</p>
         <p>Покупки действуют сразу и не меняют итоги завершённого дня.</p>
+        <p>{game.ownedItems.includes('rocking-chair') ? 'Кресло-качалка куплено — можно устраиваться поудобнее.' : `Цель: кресло-качалка — ${chair.price} монет. ${game.money >= chair.price ? 'Уже хватает на покупку.' : `Осталось накопить: ${chair.price - game.money} монет.`}`}</p>
+        {chairReaction && <p role="status">{chairReaction}</p>}
         {saveProblem && <p role="alert">Не удалось сохранить прогресс. Покупки могут не сохраниться после закрытия игры.</p>}
       </header>
       <div className="shop-categories">

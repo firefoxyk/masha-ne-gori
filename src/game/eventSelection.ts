@@ -54,6 +54,7 @@ export function eligibleEvents(events: readonly GameEvent[], state: GameState, a
   if (state.dayStatus !== 'active' || (history.shownDay === state.day && history.shownCount >= EVENT_RULES.maxPerDay)) return []
   return events.filter((event) => {
     if (event.id.startsWith('assistant-') && !assistantUnlocked(state) && !(event.continuation && history.completedChoices[event.continuation.eventId])) return false
+    if (event.requiresItem && !state.ownedItems.includes(event.requiresItem)) return false
     if (event.requiresIdea && state.projects[event.requiresIdea]) return false
     if (event.continuation) {
       const previous = history.completedChoices[event.continuation.eventId]

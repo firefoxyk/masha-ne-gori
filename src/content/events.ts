@@ -220,4 +220,14 @@ export const exampleEvents = [
       { id: 'list', text: 'Проверить список', effects: { energy: -2, sanity: 3 }, result: 'Маша вычеркнула виртуальный чайник и оставила время для настоящей паузы.' },
     ],
   },
+  {
+    id: 'rocking-chair-first-rest', title: 'Минутка в кресле',
+    text: 'Маша устраивается в новом кресле-качалке. Оно тихонько поскрипывает, словно предлагает обсудить планы на вечер.',
+    dialogue: [{ speaker: 'Маша', text: 'Планы подождут. Сначала проверим, умею ли я просто сидеть.' }],
+    trigger: { type: 'after_action', action: 'rest' }, conditions: [], requiresItem: 'rocking-chair', repeat: 'once',
+    choices: [
+      { id: 'pause', text: 'Немного покачаться', effects: { sanity: 3 }, result: 'Маша закрыла глаза. Кресло одобрительно скрипнуло.' },
+      { id: 'ideas', text: 'Записать спокойную идею', effects: { motivation: 3, energy: -2 }, result: 'Идея заняла одну строчку, а отдых — всё остальное время.' },
+    ],
+  },
 ] satisfies [GameEvent, ...GameEvent[]]
