@@ -5,6 +5,7 @@ test('вторая вкладка не затирает сохранение п�
   await page.goto('/')
   await expect.poll(() => page.evaluate(key => localStorage.getItem(key), SAVE_KEY)).not.toBeNull()
   const other = await context.newPage()
+  await other.addInitScript(() => { Math.random = () => 0.99 })
   await other.goto('/')
   await other.getByRole('button', { name: 'Проекты Маши' }).click()
   await page.getByRole('button', { name: 'Поработать' }).click()

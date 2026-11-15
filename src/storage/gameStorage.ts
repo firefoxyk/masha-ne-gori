@@ -4,7 +4,7 @@ import { createEventSession, isValidEventSession } from '../game/eventSession.ts
 import type { EventSession } from '../game/eventSession.ts'
 
 export const SAVE_KEY = 'masha-ne-gori.save'
-const SAVE_VERSION = 24
+export const SAVE_VERSION = 24
 type StorageProvider = () => Pick<Storage, 'getItem' | 'setItem'>
 const browserStorage: StorageProvider = () => window.localStorage
 
@@ -67,9 +67,18 @@ export function loadGame(getStorage: StorageProvider = browserStorage): LoadResu
 
 export function saveGame(game: GameState, getStorage: StorageProvider = browserStorage, events: EventSession = createEventSession()): boolean {
   try {
-    getStorage().setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, game, events }))
+    getStorage().setItem(SAVE_KEY, serializeGame(game, events))
     return true
   } catch {
     return false
   }
+}
+
+export function serializeGame(game: GameState, events: EventSession): string {
+  return JSON.stringify({ version: SAVE_VERSION, game, events })
+}
+
+/** Проверяет файл тем же загрузчиком и миграциями, не затрагивая localStorage. */
+export function parseSaveFile(raw: string): LoadResult {
+  return loadGame(() => ({ getItem: () => raw, setItem: () => {} }))
 }

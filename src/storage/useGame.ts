@@ -4,7 +4,8 @@ import { performAction } from '../game/actions'
 import type { ActionId } from '../game/actions'
 import { finishDay, finishExhaustedDay, startNextDay } from '../game/day'
 import { createInitialGameState } from '../game/state'
-import { loadGame, saveGame, SAVE_KEY } from './gameStorage'
+import { loadGame, saveGame, serializeGame, SAVE_KEY } from './gameStorage'
+import type { LoadResult } from './gameStorage'
 import { purchase } from '../game/shop'
 import type { ProductId } from '../game/shop'
 import { chooseEvent, continueEvent, createEventSession, eventAfterAction } from '../game/eventSession'
@@ -35,6 +36,7 @@ type StorageStatus = 'ready' | 'invalid' | 'unavailable' | 'conflict'
 
 export function useGame() {
   const expectedSave = useRef<string | null>(null)
+  const saveEpoch = useRef(0)
   const [view, setView] = useState(() => {
     const loaded = loadGame(() => ({
       getItem: key => { const raw = window.localStorage.getItem(key); expectedSave.current = raw; return raw },
@@ -48,6 +50,7 @@ export function useGame() {
       storage: (loaded.kind === 'invalid' ? 'invalid' : loaded.kind === 'unavailable' ? 'unavailable' : 'ready') as StorageStatus,
       // Загруженное сохранение не меняем, пока игрок не совершит действие.
       revision: loaded.kind === 'empty' ? 1 : 0,
+      epoch: 0,
     }
   })
   const [writeFailed, setWriteFailed] = useState(false)
@@ -63,7 +66,7 @@ export function useGame() {
   }, [])
 
   useEffect(() => {
-    if (view.revision === 0 || view.storage !== 'ready') return
+    if (view.revision === 0 || view.storage !== 'ready' || view.epoch !== saveEpoch.current) return
     try {
       const storage = window.localStorage
       if (storage.getItem(SAVE_KEY) !== expectedSave.current) {
@@ -78,7 +81,7 @@ export function useGame() {
     } catch {
       setWriteFailed(true)
     }
-  }, [view.game, view.events, view.revision, view.storage])
+  }, [view.game, view.events, view.revision, view.storage, view.epoch])
 
   function handleAction(action: ActionId) {
     const randomValues = [Math.random(), Math.random()]
@@ -310,7 +313,32 @@ export function useGame() {
   }
   function startNewGame() {
     try { expectedSave.current = window.localStorage.getItem(SAVE_KEY) } catch { expectedSave.current = null }
-    setView((current) => ({ ...current, game: createInitialGameState(), events: { ...createEventSession(), onboarding: createOnboarding() }, message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
+    saveEpoch.current += 1
+    setView((current) => ({ ...current, game: createInitialGameState(), events: { ...createEventSession(), onboarding: createOnboarding() }, message: initialMessage, storage: 'ready', revision: current.revision + 1, epoch: saveEpoch.current }))
+  }
+  function importGame(loaded: Extract<LoadResult, { kind: 'loaded' }>, expected: string | null): 'ok' | 'conflict' | 'unavailable' | 'uncertain' {
+    let storage: Storage
+    let encoded: string
+    try {
+      storage = window.localStorage
+      if (storage.getItem(SAVE_KEY) !== expected) return 'conflict'
+      encoded = serializeGame(loaded.game, loaded.events)
+      storage.setItem(SAVE_KEY, encoded)
+    } catch { return 'unavailable' }
+    saveEpoch.current += 1
+    try {
+      if (storage.getItem(SAVE_KEY) !== encoded) {
+        setView(current => ({ ...current, storage: current.storage === 'invalid' ? 'invalid' : 'conflict', epoch: saveEpoch.current }))
+        return 'conflict'
+      }
+    } catch {
+      setView(current => ({ ...current, storage: current.storage === 'invalid' ? 'invalid' : 'conflict', epoch: saveEpoch.current }))
+      return 'uncertain'
+    }
+    expectedSave.current = encoded
+    setWriteFailed(false)
+    setView(current => ({ ...current, game: loaded.game, events: loaded.events, message: loaded.game.dayStatus === 'finished' ? 'День завершён. Мы справились!' : initialMessage, gooseSignal: 0, storage: 'ready', revision: 0, epoch: saveEpoch.current }))
+    return 'ok'
   }
   function handleEndingViewed(id: EndingId) {
     setView(current => {
@@ -346,5 +374,5 @@ export function useGame() {
     })
   }
 
-  return { ...view, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, handleEndingViewed, startNewGame, dismissTip, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, handleEndingViewed, importGame, startNewGame, dismissTip, writeFailed }
 }

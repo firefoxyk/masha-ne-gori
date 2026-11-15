@@ -41,10 +41,11 @@ import GooseDialog from './GooseDialog'
 import { nextTip } from './game/onboarding'
 import OnboardingTip from './OnboardingTip'
 import EndingDialog from './EndingDialog'
+import SaveTransferDialog from './SaveTransferDialog'
 import type { EndingId } from './game/endings'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, handleEndingViewed, startNewGame, dismissTip } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, handleEndingViewed, importGame, startNewGame, dismissTip } = useGame()
   const goosePending = events.goose?.pending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [achievementsOpen, setAchievementsOpen] = useState(false)
@@ -60,7 +61,9 @@ export default function App() {
   const [projectsOpen, setProjectsOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [endingOpen, setEndingOpen] = useState<EndingId | null>(null)
-  const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen || endingOpen)
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [transferMessage, setTransferMessage] = useState('')
+  const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen || endingOpen || transferOpen)
   const tip = modalOpen ? null : nextTip(game, events)
   const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', modalOpen, events.goose?.usedDay === game.day || events.gooseVisitDay === game.day, handleGooseScheduled)
   const gooseVisible = goose.visible || !!goosePending
@@ -68,6 +71,8 @@ export default function App() {
   const focusSummary = useRef(false)
   function nextDay() { setShopOpen(false); focusSummary.current = false; returnFocus.current = true; handleNextDay() }
   function closeShop() { setShopOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.shop-open')?.focus()) }
+  function closeTransfer() { setTransferOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.save-transfer-open')?.focus()) }
+  const transferDialog = transferOpen && <SaveTransferDialog game={game} events={events} invalid={storage === 'invalid'} onClose={closeTransfer} onImport={(loaded, expected) => { const result = importGame(loaded, expected); if (result === 'ok') setTransferMessage('Сохранение восстановлено.'); return result }} />
   function closeEvent() { handleEventContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }
   useEffect(() => { if (events.littleStories?.pending) { setProjectsOpen(false); setAssistantOpen(false) } }, [events.littleStories?.pending])
   useEffect(() => {
@@ -98,9 +103,12 @@ export default function App() {
         <section className="panel day-summary" aria-labelledby="save-error-title">
           <h1 id="save-error-title">Не удалось открыть сохранение</h1>
           <p>Сохранение повреждено или создано другой версией игры. Оно не будет изменено без вашего решения.</p>
+          <p>В разделе «Перенос сохранения» можно скачать исходные данные или восстановить игру из файла.</p>
           <p>Можно начать новую игру. При этом старое сохранение будет заменено.</p>
           <button className="next-day" type="button" onClick={startNewGame}>Начать новую игру</button>
+          <button className="next-day save-transfer-open" type="button" onClick={() => setTransferOpen(true)}>Перенос сохранения</button>
         </section>
+        {transferDialog}
       </main>
     )
   }
@@ -115,13 +123,15 @@ export default function App() {
       </header>
 
       {(storage === 'unavailable' || storage === 'conflict' || writeFailed) && (
-        <p className="day-finished" role="alert">{storage === 'conflict' ? 'Сохранение изменилось в другой вкладке. Игра в этой вкладке не сохраняется. Обновите страницу, чтобы загрузить последнее сохранение: несохранённые действия этой вкладки будут потеряны.' : `Не удалось ${storage === 'unavailable' ? 'прочитать сохранение' : 'сохранить прогресс'}. Можно играть дальше, но прогресс этой сессии не сохранится.`}</p>
+        <p className="day-finished" role="alert">{storage === 'conflict' ? 'Сохранение изменилось в другой вкладке. Игра в этой вкладке не сохраняется. Можно скачать эту сессию в разделе «Сохранение». Обновление загрузит последнее сохранение и удалит несохранённые действия этой вкладки.' : `Не удалось ${storage === 'unavailable' ? 'прочитать сохранение' : 'сохранить прогресс'}. Прежние данные не изменены. Можно играть дальше и скачать текущую сессию в разделе «Сохранение», но она не сохранится автоматически.`}</p>
       )}
 
       {tip === 'intro' && <OnboardingTip id="intro" onDismiss={dismissTip} />}
 
       <div className="achievement-bar">
         <button type="button" className="achievements-open" onClick={() => { setAchievementsOpen(true); setNotices([]) }}>Достижения · {game.achievements.length} из {ACHIEVEMENTS.length}</button>
+        <button type="button" className="save-transfer-open" onClick={() => { setTransferMessage(''); setTransferOpen(true) }}>Сохранение</button>
+        {transferMessage && <span role="status">{transferMessage}</span>}
         {notices.length > 0 && <div role="status">Новое достижение: {notices.join(', ')} <button type="button" onClick={() => setNotices([])}>Закрыть</button></div>}
       </div>
       <div className="game-layout">
@@ -205,6 +215,7 @@ export default function App() {
           </section>}
         </div>
       </div>
+      {transferDialog}
       {achievementsOpen && <AchievementsDialog unlocked={game.achievements} onClose={() => { setAchievementsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.achievements-open')?.focus()) }} />}
       {endingOpen && <EndingDialog id={endingOpen} game={game} saveProblem={storage !== 'ready' || writeFailed} onContinue={() => { setEndingOpen(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.ending-options button')?.focus()) }} onNewGame={() => { setEndingOpen(null); startNewGame() }} />}
       {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage !== 'ready' || writeFailed} />}

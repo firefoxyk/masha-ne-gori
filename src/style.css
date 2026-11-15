@@ -186,6 +186,7 @@ progress { height: 7px; margin-top: 3px; }
 }
 @media (max-width: 340px) and (min-height: 561px) and (max-height: 680px) {
   .room { min-height: 110px; }
+  .game-shell .achievement-bar { margin: 1px 0; }
 }
 @media (max-width: 270px) {
   .game-shell { height: auto; min-height: 100dvh; }
@@ -209,6 +210,10 @@ progress { height: 7px; margin-top: 3px; }
 .ending-options button { width: 100%; min-height: 44px; margin: 5px 0; padding: 8px; border: 1px solid #8f483e; border-radius: 9px; background: #fff4dd; color: #503629; font-weight: 700; cursor: pointer; }
 .ending-options summary:focus-visible, .ending-confirm h3:focus-visible { outline: 3px solid #59362a; outline-offset: 2px; }
 .ending-confirm { margin-top: 12px; padding: 10px; border: 1px solid #bc8a61; border-radius: 10px; }
+.save-file-label { display: block; margin-top: 14px; font-weight: 700; }
+.achievement-bar .save-transfer-open { min-height: 44px; padding: 5px 10px; border: 1px solid #8f483e; border-radius: 9px; background: #fff4dd; color: #503629; font-weight: 700; cursor: pointer; }
+.save-transfer input[type='file'] { display: block; width: 100%; margin: 8px 0; font: inherit; }
+.save-preview { margin-top: 12px; padding: 10px; border: 1px solid #bc8a61; border-radius: 10px; overflow-wrap: anywhere; }
 .game-shell:has(.exhaustion) { height: auto; min-height: 100dvh; }
 .exhaustion button { min-height: 44px; margin-top: 5px; padding: 6px 10px; border: 1px solid #455638; border-radius: 9px; background: #586e42; color: #fffaf0; font-weight: 700; cursor: pointer; }
 
