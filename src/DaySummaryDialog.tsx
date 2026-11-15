@@ -1,8 +1,11 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { DaySummary } from './game/day'
 import type { ReactNode } from 'react'
+import type { GameState } from './game/state'
+import { availableEndings, ENDINGS } from './game/endings'
+import type { EndingId } from './game/endings'
 
-export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMount, shopTip }: { summary: DaySummary; onNextDay: () => void; onShop: () => void; focusOnMount: boolean; shopTip?: ReactNode }) {
+export default function DaySummaryPanel({ summary, game, seenEndings, onEnding, onNextDay, onShop, focusOnMount, shopTip }: { summary: DaySummary; game: GameState; seenEndings: EndingId[]; onEnding: (id: EndingId) => void; onNextDay: () => void; onShop: () => void; focusOnMount: boolean; shopTip?: ReactNode }) {
   const panelRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   useLayoutEffect(() => {
@@ -23,6 +26,7 @@ export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMou
     { label: 'Деньги', value: summary.endValues.money, change: summary.changes.money },
     { label: 'Незаконченные проекты', value: summary.endValues.unfinishedProjects, change: summary.changes.unfinishedProjects },
   ]
+  const endings = availableEndings(game)
   return (
     <section className="panel day-summary" ref={panelRef} aria-labelledby="summary-title">
       <p className="eyebrow">МОЖНО ВЫДОХНУТЬ</p>
@@ -38,9 +42,15 @@ export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMou
         ))}
       </dl>
       <p className="summary-message">Маша: «День завершён. Мы справились!»</p>
+      {endings.some(id => !seenEndings.includes(id)) && <p role="status">Доступна история прохождения — её можно посмотреть ниже или продолжить игру.</p>}
       {shopTip}
       <button className="next-day shop-open" type="button" onClick={onShop}>Заглянуть в магазин</button>
       <button className="next-day" type="button" onClick={onNextDay}>Начать следующий день</button>
+      <details className="ending-options">
+        <summary>Истории прохождения{endings.length ? ` · доступно ${endings.length}` : ''}</summary>
+        <p>Тёплая история: завершите любой проект и купите постоянную вещь. Необычная история: завершите проект «Выяснить, чей это гусь». Смотреть их необязательно; игру можно продолжить.</p>
+        {endings.map(id => <button key={id} type="button" onClick={() => onEnding(id)}>{seenEndings.includes(id) ? 'Посмотреть снова' : 'Посмотреть завершение'}: {ENDINGS[id].title}</button>)}
+      </details>
     </section>
   )
 }

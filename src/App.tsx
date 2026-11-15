@@ -40,9 +40,11 @@ import { useGooseAppearance } from './useGooseAppearance'
 import GooseDialog from './GooseDialog'
 import { nextTip } from './game/onboarding'
 import OnboardingTip from './OnboardingTip'
+import EndingDialog from './EndingDialog'
+import type { EndingId } from './game/endings'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, handleEndingViewed, startNewGame, dismissTip } = useGame()
   const goosePending = events.goose?.pending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [achievementsOpen, setAchievementsOpen] = useState(false)
@@ -57,7 +59,8 @@ export default function App() {
   const [shopOpen, setShopOpen] = useState(false)
   const [projectsOpen, setProjectsOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
-  const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen)
+  const [endingOpen, setEndingOpen] = useState<EndingId | null>(null)
+  const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen || endingOpen)
   const tip = modalOpen ? null : nextTip(game, events)
   const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', modalOpen, events.goose?.usedDay === game.day || events.gooseVisitDay === game.day, handleGooseScheduled)
   const gooseVisible = goose.visible || !!goosePending
@@ -173,7 +176,7 @@ export default function App() {
             {selectedWarning && <div className="warning-detail" id="warning-detail"><p>{selectedWarning.text}</p><button type="button" onClick={closeWarning}>Понятно</button></div>}
           </section>
 
-          {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} shopTip={tip === 'shop' ? <OnboardingTip id="shop" onDismiss={dismissTip} /> : null} /> : <section className="panel actions" aria-labelledby="actions-title">
+          {summary ? <DaySummaryPanel summary={summary} game={game} seenEndings={events.endingsSeen ?? []} onEnding={id => { handleEndingViewed(id); setEndingOpen(id) }} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} shopTip={tip === 'shop' ? <OnboardingTip id="shop" onDismiss={dismissTip} /> : null} /> : <section className="panel actions" aria-labelledby="actions-title">
             <h2 className="visually-hidden" id="actions-title">Чем займёмся?</h2>
             <div className="game-navigation">
               <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
@@ -203,6 +206,7 @@ export default function App() {
         </div>
       </div>
       {achievementsOpen && <AchievementsDialog unlocked={game.achievements} onClose={() => { setAchievementsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.achievements-open')?.focus()) }} />}
+      {endingOpen && <EndingDialog id={endingOpen} game={game} onContinue={() => { setEndingOpen(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.ending-options button')?.focus()) }} onNewGame={() => { setEndingOpen(null); startNewGame() }} />}
       {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage === 'unavailable' || writeFailed} />}
       {goosePending && <GooseDialog game={game} pending={goosePending} onChoose={handleGooseChoice} onContinue={() => { goose.dismiss(); handleGooseContinue(); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()) }} saveProblem={storage === 'unavailable' || writeFailed} />}
       {events.pending && <EventDialog pending={events.pending} game={game} onChoose={handleEventChoice} onContinue={closeEvent} saveProblem={storage === 'unavailable' || writeFailed} />}

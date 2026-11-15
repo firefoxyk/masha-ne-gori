@@ -22,6 +22,8 @@ import { isValidStoryQueue } from './storyQueue.ts'
 import type { QueuedStory } from './storyQueue.ts'
 import { isValidOnboarding } from './onboarding.ts'
 import type { Onboarding } from './onboarding.ts'
+import { isValidEndingsSeen } from './endings.ts'
+import type { EndingId } from './endings.ts'
 
 type EventChanges = Partial<DayValues> & { actionsRemaining?: number }
 
@@ -39,6 +41,7 @@ export interface EventSession {
   gooseVisitDay?: number
   storyQueue?: QueuedStory[]
   onboarding?: Onboarding
+  endingsSeen?: EndingId[]
 }
 
 export function createEventSession(): EventSession {
@@ -83,6 +86,7 @@ const record = (value: unknown): value is Record<string, unknown> => !!value && 
 export function isValidEventSession(value: unknown, game: GameState): value is EventSession {
   if (!record(value) || !record(value.history)) return false
   if (value.onboarding !== undefined && !isValidOnboarding(value.onboarding)) return false
+  if (value.endingsSeen !== undefined && !isValidEndingsSeen(value.endingsSeen)) return false
   if (value.storyQueue !== undefined && !isValidStoryQueue(value.storyQueue)) return false
   if (value.gooseVisitDay !== undefined && (!Number.isSafeInteger(value.gooseVisitDay) || (value.gooseVisitDay as number) < 1 || (value.gooseVisitDay as number) > game.day)) return false
   if (value.goose !== undefined && (!isValidGooseSession(value.goose, game) || (record(value.goose) && value.goose.pending !== null && (value.pending !== null || (record(value.work) && value.work.pending !== null) || (record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null) || (record(value.littleStories) && value.littleStories.pending !== null))))) return false

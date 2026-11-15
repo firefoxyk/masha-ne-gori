@@ -203,6 +203,12 @@ progress { height: 7px; margin-top: 3px; }
 .warning-detail { position: absolute; z-index: 3; top: calc(100% + 4px); left: 8px; right: 8px; padding: 10px 12px; border: 2px solid #93452c; border-radius: 12px; background: #fff3db; color: #493125; box-shadow: 0 3px 8px #50362955; }
 .warning-detail button { display: block; min-height: 44px; margin: 6px 0 0 auto; padding: 4px 14px; border: 1px solid #93452c; border-radius: 9px; background: #fff8e9; color: #70321e; font-weight: 700; cursor: pointer; }
 .actions .day-finished { margin: 0 0 6px; padding: 5px 8px; font-size: .78rem; line-height: 1.25; }
+.ending-options { margin: 10px 0; padding: 8px 10px; border: 1px solid #bc8a61; border-radius: 10px; background: #fffaf0; }
+.ending-options summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.ending-options p { margin: 6px 0; font-size: .9rem; }
+.ending-options button { width: 100%; min-height: 44px; margin: 5px 0; padding: 8px; border: 1px solid #8f483e; border-radius: 9px; background: #fff4dd; color: #503629; font-weight: 700; cursor: pointer; }
+.ending-options summary:focus-visible, .ending-confirm h3:focus-visible { outline: 3px solid #59362a; outline-offset: 2px; }
+.ending-confirm { margin-top: 12px; padding: 10px; border: 1px solid #bc8a61; border-radius: 10px; }
 .game-shell:has(.exhaustion) { height: auto; min-height: 100dvh; }
 .exhaustion button { min-height: 44px; margin-top: 5px; padding: 6px 10px; border: 1px solid #455638; border-radius: 9px; background: #586e42; color: #fffaf0; font-weight: 700; cursor: pointer; }
 
