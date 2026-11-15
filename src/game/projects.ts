@@ -4,6 +4,7 @@ import { ASSISTANT_STYLES, PROJECT_CHOICES } from '../content/projectChoices.ts'
 import { longStory, longStoryDetail } from '../content/projectStoriesV2.ts'
 import { shortProjectChoice } from '../content/shortProjectChoices.ts'
 import type { GameState, ProjectId, ProjectStoryProgress } from './state.ts'
+import { ambiguousTraining } from './assistant.ts'
 
 type Step = { text: string; energy: number; money: number }
 type Project = { id: ProjectId; title: string; description: string; steps: [Step, Step]; reward: { money: number; motivation: number; sanity: number }; message: string }
@@ -58,7 +59,7 @@ export function projectReason(game: GameState, id: ProjectId, command: ProjectCo
   const progress = game.projects[id]
   if (command === 'start' && progress) return 'Проект уже начат.'
   if (command === 'restart' && progress?.status !== 'completed') return 'Проект ещё не завершён.'
-  if ((command === 'start' || command === 'restart') && (game.projectCompletions[id] ?? 0) >= projectLimit(id)) return 'Проект больше недоступен: лимит прохождений исчерпан.'
+  if ((command === 'start' || command === 'restart') && (game.projectCompletions[id] ?? 0) >= projectLimit(id) && !(id === 'train-assistant' && ambiguousTraining(game))) return 'Проект больше недоступен: лимит прохождений исчерпан.'
   if (command === 'defer' && progress?.status !== 'started') return 'Проект сейчас нельзя отложить.'
   if (command === 'resume' && progress?.status !== 'deferred') return 'Проект сейчас не отложен.'
   if (command.startsWith('step-') && (progress?.status !== 'started' || command !== `step-${progress.step}`)) return 'Этот шаг уже выполнен или недоступен.'
@@ -100,7 +101,7 @@ export function advanceProject(game: GameState, id: ProjectId, command: ProjectC
     const cost = selected && 'cost' in selected && typeof selected.cost === 'number' ? selected.cost : 0
     if (game.money < cost) return { state: game, success: false, message: `Нужно ${cost} монет.` }
     const choices = selected ? { ...story.choices, [story.seen]: selected.label } : story.choices
-    const message = projectStoryText(id, { ...story, choices }, story.seen) + (selected ? ` ${selected.response}` : '')
+    let message = projectStoryText(id, { ...story, choices }, story.seen) + (selected ? ` ${selected.response}` : '')
     const final = story.seen === projectStoryLength(id, story) - 1
     const actual: NonNullable<typeof story.actual> = {}
     const next = { ...game }
@@ -112,7 +113,8 @@ export function advanceProject(game: GameState, id: ProjectId, command: ProjectC
         if (delta) actual[key] = next[key] - game[key]
       }
       next.unfinishedProjects -= 1
-      next.projectCompletions = { ...game.projectCompletions, [id]: (game.projectCompletions[id] ?? 0) + 1 }
+      next.projectCompletions = { ...game.projectCompletions, [id]: Math.min(projectLimit(id), (game.projectCompletions[id] ?? 0) + 1) }
+      if (id === 'train-assistant') message += ' Маша: «Теперь у меня есть помощник!» Помощник: «Готов помогать и задавать вопросы». Открыта панель ИИ-помощника.'
       if (projectLimit(id) === 5) next.projectSeenScenarios = { ...game.projectSeenScenarios, [id]: [...new Set([...(game.projectSeenScenarios[id] ?? []), story.scenario])] }
     }
     next.projects = { ...game.projects, [id]: { ...progress!, status: final ? 'completed' : 'started', story: { ...story, seen: story.seen + 1, actual: final ? actual : null, ...(choices ? { choices } : {}) } } }

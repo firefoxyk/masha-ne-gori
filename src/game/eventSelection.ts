@@ -3,6 +3,7 @@ import type { EventChoice, EventCondition, GameEvent } from './events.ts'
 import type { GameState } from './state.ts'
 import { genericProjects } from './state.ts'
 import { projectReason } from './projects.ts'
+import { assistantUnlocked } from './assistant.ts'
 
 // Временные настройки для будущих игровых проб.
 export const EVENT_RULES = { chance: 0.5, maxPerDay: 1, repeatCooldownDays: 2 } as const
@@ -52,6 +53,7 @@ export function choiceUnavailableReason(choice: EventChoice, state: GameState): 
 export function eligibleEvents(events: readonly GameEvent[], state: GameState, action: ActionId, history: EventHistory): GameEvent[] {
   if (state.dayStatus !== 'active' || (history.shownDay === state.day && history.shownCount >= EVENT_RULES.maxPerDay)) return []
   return events.filter((event) => {
+    if (event.id.startsWith('assistant-') && !assistantUnlocked(state) && !(event.continuation && history.completedChoices[event.continuation.eventId])) return false
     if (event.requiresIdea && state.projects[event.requiresIdea]) return false
     if (event.continuation) {
       const previous = history.completedChoices[event.continuation.eventId]

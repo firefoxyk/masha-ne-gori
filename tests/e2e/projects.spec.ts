@@ -7,7 +7,7 @@ test('проект проходит через обновление и день,
   await page.setViewportSize({ width: 320, height: 740 })
   const initial = createInitialGameState()
   initial.projectIdeas.ids = ['balcony-garden', 'recipe-book', 'cozy-corner']
-  await page.addInitScript(({ key, game, events }) => { Math.random = () => 0; if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ version: 9, game, events })) }, { key: SAVE_KEY, game: initial, events: createEventSession() })
+  await page.addInitScript(({ key, game, events }) => { Math.random = () => 0.99; if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ version: 9, game, events })) }, { key: SAVE_KEY, game: initial, events: createEventSession() })
   await page.goto('/')
   const open = page.getByRole('button', { name: 'Проекты Маши' })
   await open.focus()
@@ -15,6 +15,7 @@ test('проект проходит через обновление и день,
   const dialog = page.getByRole('dialog', { name: 'Проекты Маши' })
   await expect(dialog).toBeVisible()
   await dialog.locator('summary').filter({ hasText: 'Зелёный уголок' }).click()
+  await page.evaluate(() => { const draws = [0, 0.99, 0.99]; Math.random = () => draws.shift() ?? 0.99 })
   await dialog.getByRole('button', { name: 'Начать: Зелёный уголок' }).click()
   await expect(dialog.getByText('Состояние: начат; шагов выполнено 0 из 2.')).toBeVisible()
   await dialog.getByRole('button', { name: 'Прочитать событие: Зелёный уголок' }).click()

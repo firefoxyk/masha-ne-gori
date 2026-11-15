@@ -1,0 +1,50 @@
+import { expect, test } from './fixtures.ts'
+import { createInitialGameState } from '../../src/game/state.ts'
+import { withTrainedAssistant } from '../../src/game/assistantFixture.ts'
+import { createEventSession } from '../../src/game/eventSession.ts'
+import { SAVE_KEY } from '../../src/storage/gameStorage.ts'
+
+test('замечание и бесплатное исправление восстанавливаются на телефоне', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  const game = { ...withTrainedAssistant(createInitialGameState()), day: 13, projectIdeas: { day: 13, ids: [] }, satiety: 50, actionsRemaining: 4 }
+  const events = { ...createEventSession(), assistantJob: { id: 'food', submittedDay: 12, actual: null, reportId: 'food-missing', read: false, review: 'waiting' } }
+  await page.addInitScript(({ key, game, events }) => { if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ version: 18, game, events })) }, { key: SAVE_KEY, game, events })
+  await page.goto('/')
+  const open = () => page.getByRole('button', { name: /ИИ-помощник/ }).click()
+  await open()
+  const panel = page.getByRole('dialog', { name: 'ИИ-помощник' })
+  await panel.getByRole('button', { name: 'Открыть отчёт' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(panel.getByText(/Других продуктов нет/)).toBeVisible()
+  await expect(panel.getByText(/авокадо/, { exact: false }).first()).toBeVisible()
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').events?.assistantJob?.review, SAVE_KEY)).toBe('review')
+  await page.reload()
+  await open()
+  await panel.getByRole('button', { name: 'Авокадо нет среди продуктов' }).click()
+  await expect(panel.getByText(/авокадо я придумал/i)).toBeVisible()
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').events?.assistantJob?.review, SAVE_KEY)).toBe('noted')
+  await page.reload()
+  await open()
+  await expect(panel.getByText(/Исправление бесплатно/)).toBeVisible()
+  await panel.getByRole('button', { name: 'Попросить исправить' }).click()
+  await expect(page.getByText('Осталось действий: 4')).toBeVisible()
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').events?.assistantJob?.review, SAVE_KEY)).toBe('correcting')
+  await page.reload()
+  await open()
+  await expect(panel.getByText(/готовит исправление/)).toBeVisible()
+  await panel.getByRole('button', { name: 'Отложить и вернуться в игру' }).click()
+  await page.getByRole('button', { name: 'Закончить день' }).click()
+  await page.getByRole('button', { name: 'Начать следующий день' }).click()
+  await open()
+  await panel.getByRole('button', { name: 'Открыть исправленный ответ' }).click()
+  await expect(panel.getByText(/без воображаемого авокадо/)).toBeVisible()
+  await panel.getByRole('button', { name: 'Завершить проверку' }).click()
+  await expect(page.getByRole('progressbar', { name: 'Сытость' })).toHaveAttribute('value', '58')
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').events?.assistantJob?.review, SAVE_KEY)).toBe('resolved')
+  await page.reload()
+  await open()
+  await expect(page.getByRole('progressbar', { name: 'Сытость' })).toHaveAttribute('value', '58')
+  await panel.getByRole('button', { name: 'Завершить проверку' }).click()
+  await expect(panel.getByRole('button', { name: /Помоги спланировать день/ })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})

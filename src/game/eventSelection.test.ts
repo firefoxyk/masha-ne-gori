@@ -5,7 +5,8 @@ import type { GameEvent } from './events'
 import { createInitialGameState } from './state'
 import { availableEventChoices, conditionsMatch, createEventHistory, eligibleEvents, EVENT_RULES, recordEventCompleted, recordEventShown, selectEvent } from './eventSelection'
 
-const [work, hunger, goose] = exampleEvents
+const [assistantEvent, hunger, goose] = exampleEvents
+const work = { ...assistantEvent, id: 'test-work' }
 const state = () => createInitialGameState()
 const result = (day = 1) => ({ success: true, state: { ...state(), day } })
 const always = () => 0

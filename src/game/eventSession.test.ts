@@ -5,10 +5,11 @@ import { exampleEvents } from '../content/events'
 import { availableEventChoices, choiceUnavailableReason, eligibleEvents } from './eventSelection'
 import type { EventChoice, GameEvent } from './events'
 import { chooseEvent, continueEvent, createEventSession, eventAfterAction, isValidEventSession } from './eventSession'
+import { withTrainedAssistant } from './assistantFixture'
 
 describe('состояние карточки события', () => {
   it('создаёт один показ и применяет последствия выбора один раз', () => {
-    const game = createInitialGameState()
+    const game = withTrainedAssistant(createInitialGameState())
     const action = performAction(game, 'work')
     const session = eventAfterAction(createEventSession(), action, 'work', () => 0)
     expect(session.pending).toEqual({ eventId: 'assistant-report', choiceId: null, changes: null })
@@ -35,7 +36,7 @@ describe('состояние карточки события', () => {
     expect(chooseEvent(shown, work.state, 'unknown')).toEqual({ events: shown, game: work.state })
   })
   it('разные варианты меняют проекты или ограничивают шкалы и фиксируют фактические изменения', () => {
-    const game = { ...createInitialGameState(), energy: 3, motivation: 99 }
+    const game = { ...withTrainedAssistant(createInitialGameState()), energy: 3, motivation: 99 }
     const shown = eventAfterAction(createEventSession(), { success: true, state: game }, 'work', () => 0)
     const review = chooseEvent(shown, game, 'review')
     expect(review.game.energy).toBe(0)

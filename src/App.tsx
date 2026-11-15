@@ -11,34 +11,44 @@ import nightstandImage from './assets/room-items/nightstand.png'
 import crystalLightImage from './assets/room-items/crystal-light.png'
 import wallPhotosImage from './assets/room-items/wall-photos.png'
 import windowPlantImage from './assets/room-items/window-plant.png'
+import bookshelfImage from './assets/room-items/bookshelf-proposal.png'
+import sofaImage from './assets/room-items/sofa.png'
 import { useEffect, useRef, useState } from 'react'
 import { PROJECT_IDS, STAT_MAX } from './game/state'
 import { nextProjectStory } from './game/projects'
 import { ACTIONS, getActionDescription, getActionUnavailableReason } from './game/actions'
 import type { ActionId } from './game/actions'
 import { getDaySummary } from './game/day'
+import { bonuses, hasSofa } from './game/shop'
 import { getDetailedStateWarnings } from './game/warnings'
 import { useGame } from './storage/useGame'
 import DaySummaryPanel from './DaySummaryDialog'
 import ShopDialog from './ShopDialog'
 import EventDialog from './EventDialog'
+import RestDialog from './RestDialog'
+import MealDialog from './MealDialog'
+import LittleStoryDialog from './LittleStoryDialog'
+import AssistantDialog from './AssistantDialog'
+import { assistantUnlocked } from './game/assistant'
 import ProjectsDialog from './ProjectsDialog'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleEventChoice, handleEventContinue, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, startNewGame } = useGame()
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [openWarning, setOpenWarning] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
   const [projectsOpen, setProjectsOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const returnFocus = useRef(false)
   const focusSummary = useRef(false)
   function nextDay() { setShopOpen(false); focusSummary.current = false; returnFocus.current = true; handleNextDay() }
   function closeShop() { setShopOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.shop-open')?.focus()) }
-  function closeEvent() { handleEventContinue(); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()) }
+  function closeEvent() { handleEventContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }
+  useEffect(() => { if (events.littleStories?.pending) { setProjectsOpen(false); setAssistantOpen(false) } }, [events.littleStories?.pending])
   useEffect(() => {
     if (returnFocus.current && game.dayStatus === 'active') {
       returnFocus.current = false
-      document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()
+      if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()
     }
   }, [game.dayStatus])
   const summary = game.dayStatus === 'finished' ? getDaySummary(game) : null
@@ -86,8 +96,10 @@ export default function App() {
       <div className="game-layout">
         <div className="story-column">
           <section className="room" aria-label="Комната Маши: временная иллюстрация">
-            <div className="room-art">
+            <div className={`room-art${game.ownedItems.includes('bookshelf') ? ' room-has-bookshelf' : ''}${message.length > 90 ? ' room-long-speech' : ''}`}>
               <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением; в дверь заглядывает гусь" />
+              {hasSofa(game) && <img className="room-item room-item-sofa" src={sofaImage} alt="Уютный диван в комнате" />}
+              {game.ownedItems.includes('bookshelf') && <img className="room-item room-item-bookshelf" src={bookshelfImage} alt="Купленный книжный шкаф у стены" />}
               {game.ownedItems.includes('vine') && <img className="room-item room-item-vine" src={vineImage} alt="Купленная свисающая лиана на стене" />}
               {game.ownedItems.includes('garland') && <img className="room-item room-item-garland" src={garlandImage} alt="Купленная тёплая гирлянда у окна" />}
               {game.ownedItems.includes('wall-photos') && <img className="room-item room-item-wall-photos" src={wallPhotosImage} alt="Купленные фотографии возле кровати" />}
@@ -135,11 +147,11 @@ export default function App() {
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
             <div className="action-grid">
               {actionIds.map((id) => {
-                const reason = getActionUnavailableReason(game, id)
+                const reason = id === 'eat' && game.money < 25 && game.dayStatus === 'active' && game.actionsRemaining > 0 ? null : getActionUnavailableReason(game, id)
                 return (
                   <div className="action-item" key={id}>
                     <button type="button" disabled={reason !== null} aria-describedby={commonReason ? 'common-reason' : `${id}-description`} onClick={() => { setOpenWarning(null); handleAction(id) }}><span className="action-icon" aria-hidden="true">{id === 'work' ? '💻' : id === 'eat' ? '🥣' : '☁'}</span>{ACTIONS[id].label}</button>
-                    {!commonReason && <p className="action-description" id={`${id}-description`}>{reason ?? getActionDescription(game, id)}</p>}
+                    {!commonReason && <p className="action-description" id={`${id}-description`}>{reason ?? (id === 'eat' && game.money < 25 ? `Бесплатный перекус: +${15 + bonuses(game).eat} сытости` : getActionDescription(game, id))}</p>}
                   </div>
                 )
               })}
@@ -149,12 +161,18 @@ export default function App() {
               </div>
             </div>
             <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
+            {assistantUnlocked(game) && <button type="button" className="projects-open assistant-open" onClick={() => setAssistantOpen(true)}>ИИ-помощник{(events.assistantJob && (events.assistantJob.actual === null || events.assistantJob.read === false || (events.assistantJob.reportId && !events.assistantJob.read)) && game.day > (events.assistantJob.review === 'correcting' ? events.assistantJob.correctionDay! : events.assistantJob.submittedDay)) || (events.assistantTask && !events.assistantLegacyRead && game.day > events.assistantTask.submittedDay) ? ' · ответ готов' : ''}</button>}
           </section>}
         </div>
       </div>
       {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage === 'unavailable' || writeFailed} />}
       {events.pending && <EventDialog pending={events.pending} game={game} onChoose={handleEventChoice} onContinue={closeEvent} saveProblem={storage === 'unavailable' || writeFailed} />}
-      {projectsOpen && <ProjectsDialog game={game} message={message} onCommand={handleProject} onClose={() => { setProjectsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.projects-open')?.focus()) }} />}
+      {events.work?.pending && !events.pending && <EventDialog work pending={events.work.pending} game={game} onChoose={handleWorkChoice} onContinue={() => { handleWorkContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {events.rest?.pending && <RestDialog rest={events.rest} game={game} onChoose={handleRestChoice} onContinue={() => { handleRestContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {events.meal?.pending && <MealDialog meal={events.meal} game={game} onChoose={handleMealChoice} onCancel={() => { handleMealCancel(); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()) }} onContinue={() => { handleMealContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {events.littleStories?.pending && !events.pending && !events.work?.pending && !events.rest?.pending && !events.meal?.pending && !projectsOpen && !assistantOpen && !shopOpen && <LittleStoryDialog session={events.littleStories} game={game} onChoose={handleLittleChoice} onContinue={() => { handleLittleContinue(); requestAnimationFrame(() => { if (!document.querySelector('.event-dialog[open]')) document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus() }) }} saveProblem={storage === 'unavailable' || writeFailed} />}
+      {projectsOpen && <ProjectsDialog game={game} message={message} onCommand={handleProject} assistantJob={events.assistantJob} legacyBusy={!!events.assistantTask && !events.assistantLegacyRead} onDelegate={handleDelegateProject} onClose={() => { setProjectsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.projects-open')?.focus()) }} />}
+      {assistantOpen && <AssistantDialog game={game} task={events.assistantTask} job={events.assistantJob} legacyRead={events.assistantLegacyRead} onJob={handleAssistantJob} onClaim={handleAssistantClaim} onRead={handleAssistantRead} onReview={handleAssistantReview} onLegacyRead={handleLegacyRead} onClose={() => { setAssistantOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.assistant-open')?.focus()) }} saveProblem={storage === 'unavailable' || writeFailed} />}
     </main>
   )
 }

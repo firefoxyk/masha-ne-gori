@@ -210,4 +210,14 @@ export const exampleEvents = [
     continuation: { eventId: 'assistant-help-start', choiceId: 'break', minDays: 1 },
     choices: [{ id: 'simplify', text: 'Выбрать простую паузу', effects: { motivation: 3, energy: -2 }, result: 'Маша составила короткий план отдыха и потратила немного сил на выбор.' }],
   },
+  {
+    id: 'assistant-project-tea', title: 'Чай для команды',
+    text: 'После работы Маша предлагает помощнику виртуальный чай. Тот уточняет, нужен ли для него виртуальный чайник.',
+    dialogue: [{ speaker: 'Помощник', text: 'Я подготовил список из трёх вариантов чаепития.' }],
+    trigger: { type: 'after_action', action: 'work' }, conditions: [], repeat: 'once',
+    choices: [
+      { id: 'together', text: 'Устроить небольшую паузу', effects: { energy: 2, motivation: 1 }, result: 'Маша выпила чай, а помощник терпеливо подождал. Команда довольна.' },
+      { id: 'list', text: 'Проверить список', effects: { energy: -2, sanity: 3 }, result: 'Маша вычеркнула виртуальный чайник и оставила время для настоящей паузы.' },
+    ],
+  },
 ] satisfies [GameEvent, ...GameEvent[]]

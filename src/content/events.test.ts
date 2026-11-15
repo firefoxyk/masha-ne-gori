@@ -5,6 +5,7 @@ import { availableEventChoices, createEventHistory, eligibleEvents, recordEventS
 import { validateEvents } from '../game/events'
 import type { GameEvent } from '../game/events'
 import { createInitialGameState } from '../game/state'
+import { withTrainedAssistant } from '../game/assistantFixture'
 
 describe('стартовая подборка историй', () => {
   it('проходит валидацию и сохраняет уникальные идентификаторы', () => {
@@ -39,7 +40,7 @@ describe('стартовая подборка историй', () => {
   })
 
   it('сохраняет разнообразие повторяемых историй в обычной игре после нескольких показов', () => {
-    const initial = createInitialGameState()
+    const initial = withTrainedAssistant(createInitialGameState())
     let history = createEventHistory()
     const seen = new Set<string>()
     for (let day = 1; day <= 8; day++) {

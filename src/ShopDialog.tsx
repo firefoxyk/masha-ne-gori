@@ -39,12 +39,13 @@ export default function ShopDialog({ game, onPurchase, onClose, onNextDay, saveP
         {category.ids.map((id) => {
           const product = PRODUCTS.find((item) => item.id === id)!
           const reason = purchaseReason(game, product.id)
+          const received = product.id === 'sofa' && !!reason?.startsWith('Получено в проекте')
           return <article className="shop-item" key={product.id}>
             <div className="shop-item-heading"><h3>{product.name}</h3><span>{product.price} монет</span></div>
             <p>Сразу: {product.immediate}</p>
             {product.bonus !== 'Нет' && <p>Постоянно: {product.bonus}</p>}
             {reason && <p id={`reason-${product.id}`} className="shop-reason">{reason}</p>}
-            <button type="button" disabled={!!reason} aria-describedby={reason ? `reason-${product.id}` : undefined} onClick={() => onPurchase(product.id)} aria-label={`${reason === 'Куплено' ? 'Куплено' : 'Купить'}: ${product.name}`}>{reason === 'Куплено' ? 'Куплено' : 'Купить'}</button>
+            <button type="button" disabled={!!reason} aria-describedby={reason ? `reason-${product.id}` : undefined} onClick={() => onPurchase(product.id)} aria-label={`${reason === 'Куплено' ? 'Куплено' : received ? 'Получено в проекте' : 'Купить'}: ${product.name}`}>{reason === 'Куплено' ? 'Куплено' : received ? 'Получено в проекте' : 'Купить'}</button>
           </article>
         })}
           </div>

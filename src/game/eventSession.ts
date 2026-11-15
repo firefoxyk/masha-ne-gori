@@ -6,12 +6,29 @@ import { STAT_MAX, STAT_MIN } from './state.ts'
 import type { DayValues, GameState } from './state.ts'
 import { advanceProject } from './projects.ts'
 import type { EventChoice } from './events.ts'
+import { isValidRestSession } from './rest.ts'
+import type { RestSession } from './rest.ts'
+import { isValidMealSession } from './meals.ts'
+import type { MealSession } from './meals.ts'
+import { isValidLittleStorySession } from './littleStories.ts'
+import type { LittleStorySession } from './littleStories.ts'
+import { isValidAssistantTask, isValidAssistantJob } from './assistant.ts'
+import type { AssistantTask, AssistantJob } from './assistant.ts'
+import { isValidWorkSession } from './workEvents.ts'
+import type { WorkSession } from './workEvents.ts'
 
 type EventChanges = Partial<DayValues> & { actionsRemaining?: number }
 
 export interface EventSession {
   history: EventHistory
   pending: { eventId: string; choiceId: string | null; changes: EventChanges | null } | null
+  rest?: RestSession
+  meal?: MealSession
+  littleStories?: LittleStorySession
+  assistantTask?: AssistantTask
+  assistantLegacyRead?: boolean
+  assistantJob?: AssistantJob
+  work?: WorkSession
 }
 
 export function createEventSession(): EventSession {
@@ -22,7 +39,7 @@ export function eventAfterAction(session: EventSession, result: { state: GameSta
   if (session.pending) return session
   const event = selectEvent(exampleEvents, result, action, session.history, random)
   if (!event) return session
-  return { history: recordEventShown(session.history, event.id, result.state.day), pending: { eventId: event.id, choiceId: null, changes: null } }
+  return { ...session, history: recordEventShown(session.history, event.id, result.state.day), pending: { eventId: event.id, choiceId: null, changes: null } }
 }
 
 export function chooseEvent(session: EventSession, game: GameState, choiceId: string, random: () => number = Math.random): { events: EventSession; game: GameState } {
@@ -44,7 +61,7 @@ export function chooseEvent(session: EventSession, game: GameState, choiceId: st
     if (actual !== 0) changes[field] = actual
   }
   if (next.actionsRemaining !== game.actionsRemaining) changes.actionsRemaining = next.actionsRemaining - game.actionsRemaining
-  return { game: next, events: { history: recordEventCompleted(session.history, event.id, choiceId, game.day), pending: { eventId: event.id, choiceId, changes } } }
+  return { game: next, events: { ...session, history: recordEventCompleted(session.history, event.id, choiceId, game.day), pending: { eventId: event.id, choiceId, changes } } }
 }
 
 export function continueEvent(session: EventSession): EventSession {
@@ -55,6 +72,14 @@ export function continueEvent(session: EventSession): EventSession {
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 export function isValidEventSession(value: unknown, game: GameState): value is EventSession {
   if (!record(value) || !record(value.history)) return false
+  if (value.assistantTask !== undefined && !isValidAssistantTask(value.assistantTask, game)) return false
+  if (value.assistantLegacyRead !== undefined && (typeof value.assistantLegacyRead !== 'boolean' || !value.assistantTask)) return false
+  if (value.assistantJob !== undefined && !isValidAssistantJob(value.assistantJob, game)) return false
+  if (value.work !== undefined && !isValidWorkSession(value.work, game)) return false
+  if (record(value.work) && value.work.pending !== null && ((record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null))) return false
+  if (value.rest !== undefined && (!isValidRestSession(value.rest, game) || (value.rest.pending !== null && value.pending !== null))) return false
+  if (value.meal !== undefined && (!isValidMealSession(value.meal, game) || (value.meal.pending !== null && (value.pending !== null || (record(value.rest) && value.rest.pending !== null))))) return false
+  if (value.littleStories !== undefined && (!isValidLittleStorySession(value.littleStories, game) || (value.littleStories.pending !== null && ((record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null))))) return false
   const h = value.history
   if (!(h.shownDay === null || Number.isSafeInteger(h.shownDay) && (h.shownDay as number) >= 1 && (h.shownDay as number) <= game.day)) return false
   if (!Number.isInteger(h.shownCount) || (h.shownCount as number) < 0 || (h.shownCount as number) > 1 || (h.shownDay === null) !== (h.shownCount === 0)) return false

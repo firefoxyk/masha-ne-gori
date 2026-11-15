@@ -3,6 +3,10 @@ import { PROJECTS, nextProjectStory, projectReason, projectStoryLength, projectS
 import type { ProjectCommand } from './game/projects'
 import { genericProjects, projectLimit } from './game/state'
 import type { GameState, ProjectId } from './game/state'
+import { ambiguousTraining } from './game/assistant'
+import type { AssistantJob } from './game/assistant'
+import { DELEGATED_PROJECTS, delegationReason, projectStepLocked } from './game/projectDelegation'
+import type { DelegatedProject } from './game/projectDelegation'
 import './projects.css'
 
 type Status = 'idea' | 'started' | 'deferred' | 'completed'
@@ -12,7 +16,7 @@ const groups: { id: Status; title: string }[] = [
 ]
 const labels = { money: 'монет', satiety: 'сытости', sanity: 'кукухи', motivation: 'мотивации' }
 
-export default function ProjectsDialog({ game, message, onCommand, onClose }: { game: GameState; message: string; onCommand: (id: ProjectId, command: ProjectCommand, choice?: string) => void; onClose: () => void }) {
+export default function ProjectsDialog({ game, message, onCommand, onClose, assistantJob, legacyBusy, onDelegate }: { game: GameState; message: string; onCommand: (id: ProjectId, command: ProjectCommand, choice?: string) => void; onClose: () => void; assistantJob?: AssistantJob; legacyBusy: boolean; onDelegate: (id: DelegatedProject) => void }) {
   const ref = useRef<HTMLDialogElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -42,7 +46,7 @@ export default function ProjectsDialog({ game, message, onCommand, onClose }: { 
       <p>Обобщённые проекты — прежнее количество без названий. События могут его менять; управлять им здесь нельзя.</p>
       <p className="project-notice" role="status" aria-live="polite">Маша: «{message}»</p>
       {groups.map((group) => {
-        const visible = PROJECTS.filter((p) => group.id === 'idea' ? game.projectIdeas.ids.includes(p.id) && (!game.projects[p.id] || game.projects[p.id]?.status === 'completed') && (game.projectCompletions[p.id] ?? 0) < (['balcony-garden', 'recipe-book', 'cozy-corner'].includes(p.id) ? 5 : 1) : game.projects[p.id]?.status === group.id)
+        const visible = PROJECTS.filter((p) => group.id === 'idea' ? (game.projectIdeas.ids.includes(p.id) || (p.id === 'train-assistant' && !game.projects[p.id])) && (!game.projects[p.id] || game.projects[p.id]?.status === 'completed') && ((game.projectCompletions[p.id] ?? 0) < (['balcony-garden', 'recipe-book', 'cozy-corner'].includes(p.id) ? 5 : 1) || (p.id === 'train-assistant' && !game.projects[p.id] && ambiguousTraining(game))) : game.projects[p.id]?.status === group.id)
         return <section className="project-group" key={group.id} aria-labelledby={`project-group-${group.id}`}>
         <h3 id={`project-group-${group.id}`}>{group.title} <span>({visible.length})</span></h3>
         {group.id === 'idea' && visible.length === 0 && <p>Пока нет новых идей для проектов</p>}
@@ -53,8 +57,12 @@ export default function ProjectsDialog({ game, message, onCommand, onClose }: { 
           const available = nextProjectStory(game, project.id)
           const command: ProjectCommand = status === 'idea' ? 'start' : status === 'completed' ? 'restart' : status === 'deferred' ? 'resume' : progress?.step === 1 ? 'step-1' : 'step-0'
           const step = progress && progress.step < project.steps.length ? project.steps[progress.step] : null
-          const canCommand = group.id === 'completed' ? false : status !== 'started' || !!step
-          const reason = canCommand ? projectReason(game, project.id, command) : null
+          const canCommand = group.id === 'completed' ? project.id === 'train-assistant' && ambiguousTraining(game) : status !== 'started' || !!step
+          const locked = projectStepLocked(assistantJob, game, project.id)
+          const reason = canCommand ? (command === 'step-0' && locked ? 'Шаг поручен помощнику. Дождитесь отчёта и проверьте его.' : projectReason(game, project.id, command)) : null
+          const delegatable = status === 'started' && progress?.step === 0 && Object.hasOwn(DELEGATED_PROJECTS, project.id)
+          const delegateId = project.id as DelegatedProject
+          const delegateWhy = delegatable ? delegationReason(game, assistantJob, delegateId, legacyBusy) : null
           const storyReason = available ? projectReason(game, project.id, 'story-next') : null
           const actual = story?.actual && Object.entries(story.actual).map(([key, value]) => `${value > 0 ? '+' : ''}${value} ${labels[key as keyof typeof labels]}`).join(', ')
           const legacyResult = game.projectJournal[project.id]?.at(-1)?.legacyResult
@@ -66,6 +74,7 @@ export default function ProjectsDialog({ game, message, onCommand, onClose }: { 
             <summary id={`project-summary-${project.id}-${group.id}`} onClick={(event) => { event.preventDefault(); setOpenId(openId === cardId ? null : cardId) }}><span>{project.title}{available ? ' · Новое событие' : ''}</span><span className="project-progress">{progress?.step ?? 0} / {project.steps.length}</span></summary>
             <div className="project-details">
               <p>{project.description}</p>
+              {project.id === 'train-assistant' && group.id === 'completed' && ambiguousTraining(game) && <p>В старом сохранении не осталось подтверждения прохождения истории обучения. Можно пройти её сейчас; прежние записи сохранятся.</p>}
               {group.id === 'idea' && <p>Продолжительность: {project.id === 'ideal-sofa' ? 'около 10' : project.id === 'train-assistant' ? 'около 12' : project.id === 'goose-owner' ? 'около 13' : '3–5'} игровых дней. {projectLimit(project.id) === 1 ? 'Одноразовый проект; предстоит несколько решений.' : 'Повторяемый проект; иногда нужно заглянуть в историю.'} Начало стоит 1 действие и добавит один незаконченный проект.</p>}
               <p>Состояние: {status === 'idea' ? 'идея' : status === 'started' ? 'начат' : status === 'deferred' ? 'отложен' : 'завершён'}; шагов выполнено {progress?.step ?? 0} из {project.steps.length}.</p>
               {story && <p>Игровой день истории: {game.day - story.startDay + 1}. {status === 'deferred' ? 'Проект отложен; события подождут.' : available ? 'Появилось новое событие.' : status === 'started' ? 'Ждём продолжения.' : 'История завершена.'}</p>}
@@ -81,6 +90,8 @@ export default function ProjectsDialog({ game, message, onCommand, onClose }: { 
                 {reason && <p className="project-reason" id={`project-reason-${project.id}`}>{reason}</p>}
                 <button type="button" disabled={!!reason} aria-describedby={reason ? `project-reason-${project.id}` : undefined} onClick={() => perform(project.id, command)}>{status === 'idea' ? 'Начать' : status === 'completed' ? 'Начать снова' : status === 'deferred' ? 'Продолжить' : step!.text}: {project.title}</button>
               </>}
+              {locked && <p role="status">{assistantJob?.review === 'waiting' ? (game.day > assistantJob.submittedDay ? 'Отчёт готов.' : 'Шаг поручен; отчёт будет завтра.') : assistantJob?.review === 'correcting' ? 'Помощник готовит исправление.' : 'Отчёт ожидает проверки.'} Откройте «ИИ-помощник» на игровом экране.</p>}
+              {delegatable && <div><p>Можно поручить помощнику: 1 действие, {DELEGATED_PROJECTS[delegateId].money} монет, отчёт на следующий день; энергия не расходуется.</p><button type="button" disabled={!!delegateWhy} aria-describedby={delegateWhy ? `delegate-reason-${project.id}` : undefined} onClick={() => onDelegate(delegateId)}>Поручить помощнику: {project.title}</button>{delegateWhy && <p className="project-reason" id={`delegate-reason-${project.id}`}>{delegateWhy}</p>}</div>}
               {status === 'started' && <button type="button" onClick={() => perform(project.id, 'defer')}>Отложить: {project.title}</button>}
             </div>
           </details>

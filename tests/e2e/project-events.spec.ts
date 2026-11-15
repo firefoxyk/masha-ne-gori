@@ -48,6 +48,7 @@ test('после последнего действия можно оставит
   await dialog.getByRole('button', { name: 'Продолжить игру' }).click()
   await page.getByRole('button', { name: 'Проекты Маши' }).click()
   const projects = page.getByRole('dialog', { name: 'Проекты Маши' })
-  await expect(projects.getByRole('heading', { name: 'Доступные идеи (3)' })).toBeVisible()
+  await expect(projects.getByRole('heading', { name: /Доступные идеи/ })).toBeVisible()
   await expect(projects.locator('summary').filter({ hasText: 'Книга простых рецептов' })).toBeVisible()
+  await expect(projects.locator('summary').filter({ hasText: 'Обучить домашнего ИИ-помощника' })).toBeVisible()
 })

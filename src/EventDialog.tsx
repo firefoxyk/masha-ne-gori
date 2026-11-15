@@ -1,14 +1,15 @@
 import { useLayoutEffect, useRef } from 'react'
 import { exampleEvents } from './content/events'
+import { workEvents } from './content/workEvents'
 import { choiceUnavailableReason } from './game/eventSelection'
 import type { EventSession } from './game/eventSession'
 import type { GameState } from './game/state'
 
-export default function EventDialog({ pending, game, onChoose, onContinue, saveProblem }: { pending: NonNullable<EventSession['pending']>; game: GameState; onChoose: (id: string) => void; onContinue: () => void; saveProblem: boolean }) {
+export default function EventDialog({ pending, game, onChoose, onContinue, saveProblem, work = false }: { pending: NonNullable<EventSession['pending']>; game: GameState; onChoose: (id: string) => void; onContinue: () => void; saveProblem: boolean; work?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
   const resultRef = useRef<HTMLHeadingElement>(null)
-  const event = exampleEvents.find((item) => item.id === pending.eventId)!
+  const event = (work ? workEvents : exampleEvents).find((item) => item.id === pending.eventId)!
   const choice = event.choices.find((item) => item.id === pending.choiceId)
   useLayoutEffect(() => {
     const element = dialog.current

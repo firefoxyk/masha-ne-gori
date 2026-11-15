@@ -10,7 +10,8 @@ test('подборка идей сохраняется после перезаг
   let dialog = page.getByRole('dialog', { name: 'Проекты Маши' })
   let section = dialog.locator('#project-group-idea').locator('..')
   const ideas = await section.locator('summary').allTextContents()
-  expect(ideas).toHaveLength(3)
+  expect(ideas).toHaveLength(4)
+  expect(ideas.some((idea) => idea.includes('Обучить домашнего ИИ-помощника'))).toBe(true)
   await dialog.getByRole('button', { name: 'Вернуться в игру' }).click()
   await page.reload()
   await page.getByRole('button', { name: /Проекты Маши/ }).click()
@@ -19,11 +20,11 @@ test('подборка идей сохраняется после перезаг
   expect(await section.locator('summary').allTextContents()).toEqual(ideas)
   await section.locator('summary').first().click()
   await section.getByRole('button', { name: /^Начать:/ }).click()
-  expect(await section.locator('summary').count()).toBe(2)
+  expect(await section.locator('summary').count()).toBe(3)
   await dialog.getByRole('button', { name: 'Вернуться в игру' }).click()
   await page.reload()
   await page.getByRole('button', { name: /Проекты Маши/ }).click()
-  expect(await dialog.locator('#project-group-idea').locator('..').locator('summary').count()).toBe(2)
+  expect(await dialog.locator('#project-group-idea').locator('..').locator('summary').count()).toBe(3)
 })
 
 test('выбор стиля помощника и финал восстанавливаются на мобильном экране', async ({ page }) => {

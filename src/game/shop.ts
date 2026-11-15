@@ -35,11 +35,21 @@ const prerequisites: Partial<Record<ProductId, { item: ItemId; reason: string }>
   'crystal-light': { item: 'nightstand', reason: 'Сначала нужна прикроватная тумбочка' },
 }
 
+// Старые завершения проекта тоже подтверждают появление дивана без начисления бонусов покупки.
+export function hasProjectSofa(state: GameState): boolean {
+  return state.projects['ideal-sofa']?.status === 'completed' || (state.projectCompletions['ideal-sofa'] ?? 0) > 0 || (state.projectJournal['ideal-sofa']?.length ?? 0) > 0
+}
+
+export function hasSofa(state: GameState): boolean {
+  return state.ownedItems.includes('sofa') || hasProjectSofa(state)
+}
+
 export function purchaseReason(state: GameState, id: ProductId): string | null {
   const product = PRODUCTS.find((item) => item.id === id)
   if (!product) return 'Товар не найден.'
   if (state.dayStatus !== 'finished') return 'Магазин доступен после завершения дня.'
   if (product.kind === 'item' && state.ownedItems.includes(product.id as ItemId)) return 'Куплено'
+  if (id === 'sofa' && hasProjectSofa(state)) return 'Получено в проекте. Бонус покупки к отдыху не начисляется.'
   const requirement = prerequisites[id]
   if (requirement && !state.ownedItems.includes(requirement.item)) return requirement.reason
   if (product.kind === 'consumable' && state.consumablesBought >= CONSUMABLE_LIMIT) return 'Лимит расходуемых покупок на этот день исчерпан.'
