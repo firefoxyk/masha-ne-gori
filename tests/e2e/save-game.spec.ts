@@ -34,7 +34,7 @@ for (const raw of ['{', JSON.stringify({ version: 999, game: {} })]) {
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)).toBe(raw)
     await page.getByRole('button', { name: 'Начать новую игру' }).click()
     await expect(page.getByText('День 1', { exact: true })).toBeVisible()
-    await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').version, SAVE_KEY)).toBe(23)
+    await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').version, SAVE_KEY)).toBe(24)
   })
 }
 

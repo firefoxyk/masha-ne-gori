@@ -38,9 +38,11 @@ import { assistantUnlocked } from './game/assistant'
 import ProjectsDialog from './ProjectsDialog'
 import { useGooseAppearance } from './useGooseAppearance'
 import GooseDialog from './GooseDialog'
+import { nextTip } from './game/onboarding'
+import OnboardingTip from './OnboardingTip'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip } = useGame()
   const goosePending = events.goose?.pending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [achievementsOpen, setAchievementsOpen] = useState(false)
@@ -56,6 +58,7 @@ export default function App() {
   const [projectsOpen, setProjectsOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen)
+  const tip = modalOpen ? null : nextTip(game, events)
   const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', modalOpen, events.goose?.usedDay === game.day || events.gooseVisitDay === game.day, handleGooseScheduled)
   const gooseVisible = goose.visible || !!goosePending
   const returnFocus = useRef(false)
@@ -111,6 +114,8 @@ export default function App() {
       {(storage === 'unavailable' || writeFailed) && (
         <p className="day-finished" role="alert">Не удалось {storage === 'unavailable' ? 'прочитать сохранение' : 'сохранить прогресс'}. Можно играть дальше, но прогресс этой сессии не сохранится.</p>
       )}
+
+      {tip === 'intro' && <OnboardingTip id="intro" onDismiss={dismissTip} />}
 
       <div className="achievement-bar">
         <button type="button" className="achievements-open" onClick={() => { setAchievementsOpen(true); setNotices([]) }}>Достижения · {game.achievements.length} из {ACHIEVEMENTS.length}</button>
@@ -168,13 +173,14 @@ export default function App() {
             {selectedWarning && <div className="warning-detail" id="warning-detail"><p>{selectedWarning.text}</p><button type="button" onClick={closeWarning}>Понятно</button></div>}
           </section>
 
-          {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} /> : <section className="panel actions" aria-labelledby="actions-title">
+          {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} shopTip={tip === 'shop' ? <OnboardingTip id="shop" onDismiss={dismissTip} /> : null} /> : <section className="panel actions" aria-labelledby="actions-title">
             <h2 className="visually-hidden" id="actions-title">Чем займёмся?</h2>
             <div className="game-navigation">
               <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
               {assistantUnlocked(game) && <button type="button" className="projects-open assistant-open" onClick={() => setAssistantOpen(true)}>ИИ-помощник{(events.assistantJob && (events.assistantJob.actual === null || events.assistantJob.read === false || (events.assistantJob.reportId && !events.assistantJob.read)) && game.day > (events.assistantJob.review === 'correcting' ? events.assistantJob.correctionDay! : events.assistantJob.submittedDay)) || (events.assistantTask && !events.assistantLegacyRead && game.day > events.assistantTask.submittedDay) ? ' · ответ готов' : ''}</button>}
               {!!events.storyQueue?.length && <button type="button" className="projects-open" onClick={handleOpenStory}>Есть история · {events.storyQueue.length}</button>}
             </div>
+            {(tip === 'projects' || tip === 'queue') && <OnboardingTip id={tip} onDismiss={dismissTip} />}
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
             <div className="action-grid">

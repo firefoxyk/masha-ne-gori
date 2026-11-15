@@ -25,6 +25,8 @@ import { chooseWorkEvent, createWorkSession, selectWorkEvent } from '../game/wor
 import { chooseGoose, openGoose } from '../game/gooseInteraction'
 import type { GooseChoice } from '../game/gooseInteraction'
 import { openDeferredStory, selectDeferredStory, startUnqueuedLittleStory } from '../game/storyQueue'
+import { createOnboarding } from '../game/onboarding'
+import type { TipId } from '../game/onboarding'
 
 const initialMessage = 'Сегодня всё получится. А если нет — сначала поедим.'
 
@@ -33,7 +35,7 @@ export function useGame() {
     const loaded = loadGame()
     return {
       game: loaded.kind === 'loaded' ? loaded.game : createInitialGameState(),
-      events: loaded.kind === 'loaded' ? loaded.events : createEventSession(),
+      events: loaded.kind === 'loaded' ? loaded.events : { ...createEventSession(), onboarding: createOnboarding() },
       gooseSignal: 0,
       message: loaded.kind === 'loaded' && loaded.game.dayStatus === 'finished' ? 'День завершён. Мы справились!' : initialMessage,
       storage: loaded.kind === 'invalid' ? 'invalid' as const : loaded.kind === 'unavailable' ? 'unavailable' as const : 'ready' as const,
@@ -269,7 +271,10 @@ export function useGame() {
     })
   }
   function startNewGame() {
-    setView((current) => ({ ...current, game: createInitialGameState(), events: createEventSession(), message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
+    setView((current) => ({ ...current, game: createInitialGameState(), events: { ...createEventSession(), onboarding: createOnboarding() }, message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
+  }
+  function dismissTip(id: TipId) {
+    setView(current => !current.events.onboarding || current.events.onboarding[id] ? current : { ...current, events: { ...current.events, onboarding: { ...current.events.onboarding, [id]: true } }, revision: current.revision + 1 })
   }
   function handleGooseOpen() {
     setView(current => {
@@ -296,5 +301,5 @@ export function useGame() {
     })
   }
 
-  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip, writeFailed }
 }

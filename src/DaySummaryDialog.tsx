@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { DaySummary } from './game/day'
+import type { ReactNode } from 'react'
 
-export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMount }: { summary: DaySummary; onNextDay: () => void; onShop: () => void; focusOnMount: boolean }) {
+export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMount, shopTip }: { summary: DaySummary; onNextDay: () => void; onShop: () => void; focusOnMount: boolean; shopTip?: ReactNode }) {
   const panelRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   useLayoutEffect(() => {
@@ -37,6 +38,7 @@ export default function DaySummaryPanel({ summary, onNextDay, onShop, focusOnMou
         ))}
       </dl>
       <p className="summary-message">Маша: «День завершён. Мы справились!»</p>
+      {shopTip}
       <button className="next-day shop-open" type="button" onClick={onShop}>Заглянуть в магазин</button>
       <button className="next-day" type="button" onClick={onNextDay}>Начать следующий день</button>
     </section>
