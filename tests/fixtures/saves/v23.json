@@ -1,0 +1,70 @@
+{
+  "version": 23,
+  "game": {
+    "day": 2,
+    "achievements": [],
+    "energy": 65,
+    "satiety": 60,
+    "sanity": 85,
+    "money": 70,
+    "motivation": 70,
+    "unfinishedProjects": 0,
+    "dayStatus": "active",
+    "actionsRemaining": 4,
+    "dayStart": {
+      "energy": 80,
+      "satiety": 70,
+      "sanity": 85,
+      "money": 40,
+      "motivation": 70,
+      "unfinishedProjects": 0
+    },
+    "dayEnd": null,
+    "ownedItems": [
+      "pillow"
+    ],
+    "consumablesBought": 0,
+    "projects": {},
+    "projectCompletions": {},
+    "projectIdeas": {
+      "day": 2,
+      "ids": [
+        "balcony-garden",
+        "recipe-book",
+        "cozy-corner"
+      ]
+    },
+    "projectWaits": {
+      "balcony-garden": 0,
+      "recipe-book": 0,
+      "cozy-corner": 0,
+      "ideal-sofa": 2,
+      "train-assistant": 2,
+      "goose-owner": 2
+    },
+    "projectSeenScenarios": {},
+    "projectJournal": {}
+  },
+  "events": {
+    "history": {
+      "shownDay": 2,
+      "shownCount": 1,
+      "lastShownByEvent": {
+        "goose-note": 2
+      },
+      "completedEventIds": [],
+      "completedChoices": {}
+    },
+    "pending": {
+      "eventId": "goose-note",
+      "choiceId": null,
+      "changes": null
+    },
+    "storyQueue": [
+      {
+        "type": "work",
+        "id": "work-01"
+      }
+    ]
+  }
+}

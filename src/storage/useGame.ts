@@ -1,10 +1,10 @@
 import { awardAchievements } from '../game/achievements'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { performAction } from '../game/actions'
 import type { ActionId } from '../game/actions'
 import { finishDay, finishExhaustedDay, startNextDay } from '../game/day'
 import { createInitialGameState } from '../game/state'
-import { loadGame, saveGame } from './gameStorage'
+import { loadGame, saveGame, SAVE_KEY } from './gameStorage'
 import { purchase } from '../game/shop'
 import type { ProductId } from '../game/shop'
 import { chooseEvent, continueEvent, createEventSession, eventAfterAction } from '../game/eventSession'
@@ -31,24 +31,53 @@ import { availableEndings } from '../game/endings'
 import type { EndingId } from '../game/endings'
 
 const initialMessage = 'Сегодня всё получится. А если нет — сначала поедим.'
+type StorageStatus = 'ready' | 'invalid' | 'unavailable' | 'conflict'
 
 export function useGame() {
+  const expectedSave = useRef<string | null>(null)
   const [view, setView] = useState(() => {
-    const loaded = loadGame()
+    const loaded = loadGame(() => ({
+      getItem: key => { const raw = window.localStorage.getItem(key); expectedSave.current = raw; return raw },
+      setItem: (key, value) => window.localStorage.setItem(key, value),
+    }))
     return {
       game: loaded.kind === 'loaded' ? loaded.game : createInitialGameState(),
       events: loaded.kind === 'loaded' ? loaded.events : { ...createEventSession(), onboarding: createOnboarding() },
       gooseSignal: 0,
       message: loaded.kind === 'loaded' && loaded.game.dayStatus === 'finished' ? 'День завершён. Мы справились!' : initialMessage,
-      storage: loaded.kind === 'invalid' ? 'invalid' as const : loaded.kind === 'unavailable' ? 'unavailable' as const : 'ready' as const,
-      revision: loaded.kind === 'loaded' || loaded.kind === 'empty' ? 1 : 0,
+      storage: (loaded.kind === 'invalid' ? 'invalid' : loaded.kind === 'unavailable' ? 'unavailable' : 'ready') as StorageStatus,
+      // Загруженное сохранение не меняем, пока игрок не совершит действие.
+      revision: loaded.kind === 'empty' ? 1 : 0,
     }
   })
   const [writeFailed, setWriteFailed] = useState(false)
+  useEffect(() => {
+    function changed(event: StorageEvent) {
+      if (event.key !== SAVE_KEY && event.key !== null) return
+      try { if (event.storageArea !== window.localStorage) return } catch { return }
+      if (event.newValue === expectedSave.current) return
+      setView(current => current.storage === 'ready' ? { ...current, storage: 'conflict' } : current)
+    }
+    window.addEventListener('storage', changed)
+    return () => window.removeEventListener('storage', changed)
+  }, [])
 
   useEffect(() => {
     if (view.revision === 0 || view.storage !== 'ready') return
-    setWriteFailed(!saveGame(view.game, undefined, view.events))
+    try {
+      const storage = window.localStorage
+      if (storage.getItem(SAVE_KEY) !== expectedSave.current) {
+        setView(current => current.storage === 'ready' ? { ...current, storage: 'conflict' } : current)
+        return
+      }
+      const saved = saveGame(view.game, () => ({
+        getItem: key => storage.getItem(key),
+        setItem: (key, value) => { storage.setItem(key, value); expectedSave.current = value },
+      }), view.events)
+      setWriteFailed(!saved)
+    } catch {
+      setWriteFailed(true)
+    }
   }, [view.game, view.events, view.revision, view.storage])
 
   function handleAction(action: ActionId) {
@@ -280,6 +309,7 @@ export function useGame() {
     })
   }
   function startNewGame() {
+    try { expectedSave.current = window.localStorage.getItem(SAVE_KEY) } catch { expectedSave.current = null }
     setView((current) => ({ ...current, game: createInitialGameState(), events: { ...createEventSession(), onboarding: createOnboarding() }, message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
   }
   function handleEndingViewed(id: EndingId) {

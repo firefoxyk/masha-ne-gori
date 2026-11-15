@@ -4,7 +4,7 @@ import type { EndingId } from './game/endings'
 import type { GameState } from './game/state'
 import './projects.css'
 
-export default function EndingDialog({ id, game, onContinue, onNewGame }: { id: EndingId; game: GameState; onContinue: () => void; onNewGame: () => void }) {
+export default function EndingDialog({ id, game, onContinue, onNewGame, saveProblem }: { id: EndingId; game: GameState; onContinue: () => void; onNewGame: () => void; saveProblem: boolean }) {
   const [confirm, setConfirm] = useState(false)
   const dialog = useRef<HTMLDialogElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
@@ -17,6 +17,7 @@ export default function EndingDialog({ id, game, onContinue, onNewGame }: { id: 
   return <dialog ref={dialog} className="projects-dialog ending-dialog" aria-labelledby="ending-title" onCancel={event => { event.preventDefault(); if (confirm) cancelNewGame(); else onContinue() }}>
     <div className="projects-content">
       <h2 id="ending-title" ref={title} tabIndex={-1}>{ending.title}</h2>
+      {saveProblem && <p role="alert">Прогресс этой вкладки не сохраняется. Вернитесь к игре, чтобы узнать подробности.</p>}
       <p>{ending.text}</p>
       <p>Маша: «{ending.quote}»</p>
       <p>Игровой день: {game.day}. Постоянных вещей: {game.ownedItems.length}. Достижений: {game.achievements.length}.</p>

@@ -1,0 +1,49 @@
+{
+  "version": 6,
+  "game": {
+    "day": 2,
+    "energy": 60,
+    "satiety": 60,
+    "sanity": 85,
+    "money": 65,
+    "motivation": 70,
+    "unfinishedProjects": 1,
+    "dayStatus": "active",
+    "actionsRemaining": 2,
+    "dayStart": {
+      "energy": 80,
+      "satiety": 70,
+      "sanity": 85,
+      "money": 40,
+      "motivation": 70,
+      "unfinishedProjects": 0
+    },
+    "dayEnd": null,
+    "ownedItems": [
+      "pillow"
+    ],
+    "consumablesBought": 0,
+    "projects": {
+      "balcony-garden": {
+        "status": "started",
+        "step": 1
+      }
+    }
+  },
+  "events": {
+    "history": {
+      "shownDay": 2,
+      "shownCount": 1,
+      "lastShownByEvent": {
+        "assistant-report": 2
+      },
+      "completedEventIds": [],
+      "completedChoices": {}
+    },
+    "pending": {
+      "eventId": "assistant-report",
+      "choiceId": null,
+      "changes": null
+    }
+  }
+}

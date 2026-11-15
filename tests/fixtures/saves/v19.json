@@ -1,0 +1,80 @@
+{
+  "version": 19,
+  "game": {
+    "day": 13,
+    "energy": 80,
+    "satiety": 70,
+    "sanity": 80,
+    "money": 100,
+    "motivation": 70,
+    "unfinishedProjects": 0,
+    "dayStatus": "active",
+    "actionsRemaining": 4,
+    "dayStart": {
+      "energy": 80,
+      "satiety": 70,
+      "sanity": 80,
+      "money": 100,
+      "motivation": 70,
+      "unfinishedProjects": 0
+    },
+    "dayEnd": null,
+    "ownedItems": [],
+    "consumablesBought": 0,
+    "projects": {
+      "train-assistant": {
+        "status": "completed",
+        "step": 2,
+        "story": {
+          "scenario": 0,
+          "startDay": 1,
+          "seen": 5,
+          "actual": {
+            "motivation": 8
+          },
+          "edition": 2,
+          "choices": {
+            "1": "Попросить спокойный план",
+            "2": "Проверить рецепт",
+            "3": "Спокойный"
+          }
+        }
+      }
+    },
+    "projectCompletions": {
+      "train-assistant": 1
+    },
+    "projectIdeas": {
+      "day": 13,
+      "ids": []
+    },
+    "projectWaits": {
+      "balcony-garden": 0,
+      "recipe-book": 0,
+      "cozy-corner": 0,
+      "ideal-sofa": 1,
+      "train-assistant": 1,
+      "goose-owner": 1
+    },
+    "projectSeenScenarios": {},
+    "projectJournal": {}
+  },
+  "events": {
+    "history": {
+      "shownDay": null,
+      "shownCount": 0,
+      "lastShownByEvent": {},
+      "completedEventIds": [],
+      "completedChoices": {}
+    },
+    "pending": null,
+    "assistantJob": {
+      "id": "food",
+      "submittedDay": 13,
+      "actual": null,
+      "reportId": "food-sandwich",
+      "read": false,
+      "review": "waiting"
+    }
+  }
+}

@@ -16,7 +16,7 @@ const groups: { id: Status; title: string }[] = [
 ]
 const labels = { money: 'монет', satiety: 'сытости', sanity: 'кукухи', motivation: 'мотивации' }
 
-export default function ProjectsDialog({ game, message, onCommand, onClose, assistantJob, legacyBusy, onDelegate }: { game: GameState; message: string; onCommand: (id: ProjectId, command: ProjectCommand, choice?: string) => void; onClose: () => void; assistantJob?: AssistantJob; legacyBusy: boolean; onDelegate: (id: DelegatedProject) => void }) {
+export default function ProjectsDialog({ game, message, onCommand, onClose, assistantJob, legacyBusy, onDelegate, saveProblem }: { game: GameState; message: string; onCommand: (id: ProjectId, command: ProjectCommand, choice?: string) => void; onClose: () => void; assistantJob?: AssistantJob; legacyBusy: boolean; onDelegate: (id: DelegatedProject) => void; saveProblem: boolean }) {
   const ref = useRef<HTMLDialogElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -41,6 +41,7 @@ export default function ProjectsDialog({ game, message, onCommand, onClose, assi
   return <dialog ref={ref} className="projects-dialog" aria-labelledby="projects-title" onCancel={(event) => { event.preventDefault(); onClose() }}>
     <div className="projects-content">
       <h2 id="projects-title" ref={title} tabIndex={-1}>Проекты Маши</h2>
+      {saveProblem && <p role="alert">Прогресс этой вкладки не сохраняется. Вернитесь к игре, чтобы узнать подробности.</p>}
       <p>Начало и каждый шаг расходуют одно действие. Осталось действий: <strong>{game.actionsRemaining}</strong>.</p>
       <p className="projects-count">Незаконченных: {game.unfinishedProjects} — именованных {game.unfinishedProjects - oldCount}, обобщённых {oldCount}.</p>
       <p>Обобщённые проекты — прежнее количество без названий. События могут его менять; управлять им здесь нельзя.</p>

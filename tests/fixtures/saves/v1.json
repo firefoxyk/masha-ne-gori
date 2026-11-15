@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "game": {
+    "day": 1,
+    "energy": 65,
+    "satiety": 60,
+    "sanity": 80,
+    "money": 130,
+    "motivation": 70,
+    "unfinishedProjects": 0,
+    "dayStatus": "active",
+    "actionsRemaining": 4,
+    "dayStart": {
+      "energy": 80,
+      "satiety": 70,
+      "sanity": 80,
+      "money": 100,
+      "motivation": 70,
+      "unfinishedProjects": 0
+    }
+  }
+}
