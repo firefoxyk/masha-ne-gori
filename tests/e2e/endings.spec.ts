@@ -9,6 +9,8 @@ test('связный путь: покупка, проект и тёплое за
   game.projectIdeas.ids = ['balcony-garden', 'recipe-book', 'cozy-corner']
   await page.addInitScript(({ key, game, events }) => { if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ version: 24, game, events })) }, { key: SAVE_KEY, game, events: createEventSession() })
   await page.goto('/')
+  await page.getByRole('button', { name: 'Поработать' }).click()
+  await page.getByRole('button', { name: 'Отдохнуть' }).click()
   await page.getByRole('button', { name: 'Проекты Маши' }).click()
   const projects = page.getByRole('dialog', { name: 'Проекты Маши' })
   await projects.locator('summary').filter({ hasText: 'Зелёный уголок' }).click()
@@ -38,7 +40,14 @@ test('связный путь: покупка, проект и тёплое за
   await expect(page.getByText(/Доступна история прохождения/)).toBeVisible()
   await page.locator('.ending-options summary').click()
   await page.getByRole('button', { name: 'Посмотреть завершение: Место для себя' }).click()
-  await expect(page.getByRole('dialog', { name: 'Место для себя' })).toBeVisible()
+  const ending = page.getByRole('dialog', { name: 'Место для себя' })
+  await expect(ending).toBeVisible()
+  await ending.getByRole('button', { name: 'Продолжить игру' }).click()
+  await page.getByRole('button', { name: 'Начать следующий день' }).click()
+  await expect(page.getByText('День 4', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('День 4', { exact: true })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Купленное растение у стены' })).toBeVisible()
 })
 
 test('старые покупки, два финала, обновление, отмена и подтверждение новой игры', async ({ page }) => {
