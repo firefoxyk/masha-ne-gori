@@ -17,13 +17,14 @@ import { chooseRest, createRestSession, startSpecialRest } from '../game/rest'
 import type { RestId } from '../content/rest'
 import { chooseMeal, createMealSession, startFreeSnack, startSpecialMeal } from '../game/meals'
 import type { MealId } from '../content/meals'
-import { chooseLittleStory, continueLittleStory, createLittleStorySession, maybeStartLittleStory, surfaceLittleStory } from '../game/littleStories'
+import { chooseLittleStory, continueLittleStory, createLittleStorySession, surfaceLittleStory } from '../game/littleStories'
 import { sendAssistantTask, sendAssistantJob, claimAssistantJob } from '../game/assistant'
 import type { AssistantJobId } from '../game/assistant'
 import { noteAssistantReport, openAssistantCorrection, requestAssistantCorrection, resolveAssistantReport } from '../game/assistantReview'
 import { chooseWorkEvent, createWorkSession, selectWorkEvent } from '../game/workEvents'
 import { chooseGoose, openGoose } from '../game/gooseInteraction'
 import type { GooseChoice } from '../game/gooseInteraction'
+import { openDeferredStory, selectDeferredStory, startUnqueuedLittleStory } from '../game/storyQueue'
 
 const initialMessage = 'Сегодня всё получится. А если нет — сначала поедим.'
 
@@ -67,13 +68,18 @@ export function useGame() {
       const result = performAction(current.game, action)
       let draw = 0
       const selected = eventAfterAction(current.events, result, action, () => randomValues[draw++])
+      if (result.success && selected.pending) {
+        const events = selectDeferredStory(selected, result.state, action, workRoll, workPick, storyRoll, storyPick)
+        return { ...current, game: action === 'rest' ? awardAchievements(result.state, 'care') : result.state, events, message: result.message, gooseSignal: current.gooseSignal + 1, revision: current.revision + 1 }
+      }
       const previousWork = selected.work ?? createWorkSession()
-      const work = action === 'work' ? selectWorkEvent(previousWork, result.state, result.success, workRoll, workPick) : previousWork
-      const stories = maybeStartLittleStory(selected.littleStories ?? createLittleStorySession(), result.success && !work.pending, storyRoll, storyPick, result.state)
+      const reservedWork = (selected.storyQueue ?? []).filter(item => item.type === 'work').map(item => item.id)
+      const foundWork = action === 'work' ? selectWorkEvent({ ...previousWork, recent: [...previousWork.recent, ...reservedWork] }, result.state, result.success, workRoll, workPick) : previousWork
+      const work = foundWork.pending ? { ...foundWork, recent: [...previousWork.recent.filter(id => id !== foundWork.pending!.eventId), foundWork.pending.eventId].slice(-10) } : previousWork
+      const stories = startUnqueuedLittleStory(selected, result.state, result.success && !work.pending, storyRoll, storyPick)
       let events = stories === selected.littleStories || (!selected.littleStories && !stories.pending) ? selected : { ...selected, littleStories: stories }
       if (work !== previousWork) events = { ...events, work }
-      const clear = !events.pending && !events.work?.pending && !events.rest?.pending && !events.meal?.pending && !events.littleStories?.pending
-      return { ...current, game: result.success && action === 'rest' ? awardAchievements(result.state, 'care') : result.state, events, message: result.message, gooseSignal: current.gooseSignal + (result.success && clear ? 1 : 0), revision: current.revision + (result.success ? 1 : 0) }
+      return { ...current, game: result.success && action === 'rest' ? awardAchievements(result.state, 'care') : result.state, events, message: result.message, gooseSignal: current.gooseSignal + (result.success ? 1 : 0), revision: current.revision + (result.success ? 1 : 0) }
     })
   }
   function handleFinishDay() {
@@ -105,7 +111,7 @@ export function useGame() {
       if (command === 'step-0' && projectStepLocked(current.events.assistantJob, current.game, id)) return current
       const result = advanceProject(current.game, id, command, () => random, choice)
       if (!result.success) return current
-      const stories = maybeStartLittleStory(current.events.littleStories ?? createLittleStorySession(), result.state.actionsRemaining < current.game.actionsRemaining, storyRoll, storyPick, result.state)
+      const stories = startUnqueuedLittleStory(current.events, result.state, result.state.actionsRemaining < current.game.actionsRemaining, storyRoll, storyPick)
       const events = stories === current.events.littleStories || (!current.events.littleStories && !stories.pending) ? current.events : { ...current.events, littleStories: stories }
       return { ...current, events, game: result.state.projects[id]?.status === 'completed' && current.game.projects[id]?.status !== 'completed' ? awardAchievements(result.state, 'project') : result.state, message: result.message, revision: current.revision + 1 }
     })
@@ -124,14 +130,19 @@ export function useGame() {
     setView((current) => {
       const result = chooseEvent(current.events, current.game, choiceId, () => random)
       if (result.events === current.events) return current
-      const stories = maybeStartLittleStory(result.events.littleStories ?? createLittleStorySession(), !result.events.work?.pending && result.game.actionsRemaining < current.game.actionsRemaining, storyRoll, storyPick, result.game)
-      const events = stories === result.events.littleStories || (!result.events.littleStories && !stories.pending) ? result.events : { ...result.events, littleStories: stories }
+      const events = !result.events.work?.pending && result.game.actionsRemaining < current.game.actionsRemaining ? selectDeferredStory(result.events, result.game, 'rest', 1, 1, storyRoll, storyPick) : result.events
       return { ...current, ...result, events, revision: current.revision + 1 }
     })
   }
   function handleEventContinue() {
     setView((current) => {
       const events = continueEvent(current.events)
+      return events === current.events ? current : { ...current, events, revision: current.revision + 1 }
+    })
+  }
+  function handleOpenStory() {
+    setView(current => {
+      const events = openDeferredStory(current.events, current.game)
       return events === current.events ? current : { ...current, events, revision: current.revision + 1 }
     })
   }
@@ -154,7 +165,7 @@ export function useGame() {
     setView((current) => {
       if (!current.events.rest) return current
       const result = chooseRest(current.game, current.events.rest, id, random)
-      return result.game === current.game ? current : { ...current, game: awardAchievements(result.game, 'care'), events: { ...current.events, rest: result.rest }, revision: current.revision + 1 }
+      return result.game === current.game ? current : { ...current, game: awardAchievements(result.game, 'care'), events: { ...current.events, rest: result.rest }, gooseSignal: current.gooseSignal + 1, revision: current.revision + 1 }
     })
   }
   function handleRestContinue() {
@@ -173,7 +184,7 @@ export function useGame() {
     setView((current) => {
       if (!current.events.meal) return current
       const result = chooseMeal(current.game, current.events.meal, id, random)
-      return result.game === current.game ? current : { ...current, game: result.game, events: { ...current.events, meal: result.meal }, revision: current.revision + 1 }
+      return result.game === current.game ? current : { ...current, game: result.game, events: { ...current.events, meal: result.meal }, gooseSignal: current.gooseSignal + 1, revision: current.revision + 1 }
     })
   }
   function handleMealCancel() {
@@ -217,7 +228,7 @@ export function useGame() {
       const result = sendAssistantTask(current.game, current.events.assistantTask)
       if (result.game === current.game || !result.task) return current
       const session = current.events.littleStories ?? createLittleStorySession()
-      const stories = maybeStartLittleStory(session, true, roll, pick, result.game)
+      const stories = startUnqueuedLittleStory(current.events, result.game, true, roll, pick)
       return { ...current, game: result.game, events: { ...current.events, assistantTask: result.task, ...(stories !== session ? { littleStories: stories } : {}) }, revision: current.revision + 1 }
     })
   }
@@ -267,6 +278,9 @@ export function useGame() {
       return goose === current.events.goose ? current : { ...current, events: { ...current.events, goose }, revision: current.revision + 1 }
     })
   }
+  function handleGooseScheduled(day: number) {
+    setView(current => current.game.day !== day || current.events.gooseVisitDay === day ? current : { ...current, events: { ...current.events, gooseVisitDay: day }, revision: current.revision + 1 })
+  }
   function handleGooseChoice(id: GooseChoice) {
     setView(current => {
       if (!current.events.goose) return current
@@ -282,5 +296,5 @@ export function useGame() {
     })
   }
 
-  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseChoice, handleGooseContinue, startNewGame, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, writeFailed }
 }

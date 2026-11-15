@@ -18,6 +18,8 @@ import { isValidWorkSession } from './workEvents.ts'
 import type { WorkSession } from './workEvents.ts'
 import { isValidGooseSession } from './gooseInteraction.ts'
 import type { GooseSession } from './gooseInteraction.ts'
+import { isValidStoryQueue } from './storyQueue.ts'
+import type { QueuedStory } from './storyQueue.ts'
 
 type EventChanges = Partial<DayValues> & { actionsRemaining?: number }
 
@@ -32,6 +34,8 @@ export interface EventSession {
   assistantJob?: AssistantJob
   work?: WorkSession
   goose?: GooseSession
+  gooseVisitDay?: number
+  storyQueue?: QueuedStory[]
 }
 
 export function createEventSession(): EventSession {
@@ -75,6 +79,8 @@ export function continueEvent(session: EventSession): EventSession {
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 export function isValidEventSession(value: unknown, game: GameState): value is EventSession {
   if (!record(value) || !record(value.history)) return false
+  if (value.storyQueue !== undefined && !isValidStoryQueue(value.storyQueue)) return false
+  if (value.gooseVisitDay !== undefined && (!Number.isSafeInteger(value.gooseVisitDay) || (value.gooseVisitDay as number) < 1 || (value.gooseVisitDay as number) > game.day)) return false
   if (value.goose !== undefined && (!isValidGooseSession(value.goose, game) || (record(value.goose) && value.goose.pending !== null && (value.pending !== null || (record(value.work) && value.work.pending !== null) || (record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null) || (record(value.littleStories) && value.littleStories.pending !== null))))) return false
   if (value.assistantTask !== undefined && !isValidAssistantTask(value.assistantTask, game)) return false
   if (value.assistantLegacyRead !== undefined && (typeof value.assistantLegacyRead !== 'boolean' || !value.assistantTask)) return false
@@ -84,6 +90,10 @@ export function isValidEventSession(value: unknown, game: GameState): value is E
   if (value.rest !== undefined && (!isValidRestSession(value.rest, game) || (value.rest.pending !== null && value.pending !== null))) return false
   if (value.meal !== undefined && (!isValidMealSession(value.meal, game) || (value.meal.pending !== null && (value.pending !== null || (record(value.rest) && value.rest.pending !== null))))) return false
   if (value.littleStories !== undefined && (!isValidLittleStorySession(value.littleStories, game) || (value.littleStories.pending !== null && ((record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null))))) return false
+  if (Array.isArray(value.storyQueue) && record(value.littleStories) && Array.isArray(value.littleStories.active)) {
+    const waiting = value.storyQueue.filter((item: QueuedStory) => item.type === 'little')
+    if (waiting.length + value.littleStories.active.length > 2 || waiting.some((item: QueuedStory) => value.littleStories && record(value.littleStories) && Array.isArray(value.littleStories.active) && value.littleStories.active.some((active: { id: string }) => active.id === item.id))) return false
+  }
   const h = value.history
   if (!(h.shownDay === null || Number.isSafeInteger(h.shownDay) && (h.shownDay as number) >= 1 && (h.shownDay as number) <= game.day)) return false
   if (!Number.isInteger(h.shownCount) || (h.shownCount as number) < 0 || (h.shownCount as number) > 1 || (h.shownDay === null) !== (h.shownCount === 0)) return false

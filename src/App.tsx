@@ -40,10 +40,8 @@ import { useGooseAppearance } from './useGooseAppearance'
 import GooseDialog from './GooseDialog'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseChoice, handleGooseContinue, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame } = useGame()
   const goosePending = events.goose?.pending
-  const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', !!goosePending, events.goose?.usedDay === game.day)
-  const gooseVisible = goose.visible || !!goosePending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [achievementsOpen, setAchievementsOpen] = useState(false)
   const [notices, setNotices] = useState<string[]>([])
@@ -57,6 +55,9 @@ export default function App() {
   const [shopOpen, setShopOpen] = useState(false)
   const [projectsOpen, setProjectsOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const modalOpen = !!(goosePending || events.pending || events.work?.pending || events.rest?.pending || events.meal?.pending || events.littleStories?.pending || projectsOpen || assistantOpen || shopOpen || achievementsOpen)
+  const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', modalOpen, events.goose?.usedDay === game.day || events.gooseVisitDay === game.day, handleGooseScheduled)
+  const gooseVisible = goose.visible || !!goosePending
   const returnFocus = useRef(false)
   const focusSummary = useRef(false)
   function nextDay() { setShopOpen(false); focusSummary.current = false; returnFocus.current = true; handleNextDay() }
@@ -172,6 +173,7 @@ export default function App() {
             <div className="game-navigation">
               <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
               {assistantUnlocked(game) && <button type="button" className="projects-open assistant-open" onClick={() => setAssistantOpen(true)}>ИИ-помощник{(events.assistantJob && (events.assistantJob.actual === null || events.assistantJob.read === false || (events.assistantJob.reportId && !events.assistantJob.read)) && game.day > (events.assistantJob.review === 'correcting' ? events.assistantJob.correctionDay! : events.assistantJob.submittedDay)) || (events.assistantTask && !events.assistantLegacyRead && game.day > events.assistantTask.submittedDay) ? ' · ответ готов' : ''}</button>}
+              {!!events.storyQueue?.length && <button type="button" className="projects-open" onClick={handleOpenStory}>Есть история · {events.storyQueue.length}</button>}
             </div>
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
