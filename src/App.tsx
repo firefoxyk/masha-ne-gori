@@ -1,3 +1,5 @@
+import { ACHIEVEMENTS } from './game/achievements'
+import AchievementsDialog from './AchievementsDialog'
 import roomImage from './assets/starter-room-no-goose.png'
 import gooseImage from './assets/room-items/goose.png'
 import plantImage from './assets/room-items/plant.png'
@@ -43,6 +45,14 @@ export default function App() {
   const goose = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active', !!goosePending, events.goose?.usedDay === game.day)
   const gooseVisible = goose.visible || !!goosePending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
+  const [achievementsOpen, setAchievementsOpen] = useState(false)
+  const [notices, setNotices] = useState<string[]>([])
+  const previousAchievements = useRef(game.achievements)
+  useEffect(() => {
+    const newIds = game.achievements.filter(id => !previousAchievements.current.includes(id))
+    previousAchievements.current = game.achievements
+    if (newIds.length) setNotices(current => [...current, ...ACHIEVEMENTS.filter(item => newIds.includes(item.id)).map(item => item.title)])
+  }, [game.achievements])
   const [openWarning, setOpenWarning] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
   const [projectsOpen, setProjectsOpen] = useState(false)
@@ -101,6 +111,10 @@ export default function App() {
         <p className="day-finished" role="alert">Не удалось {storage === 'unavailable' ? 'прочитать сохранение' : 'сохранить прогресс'}. Можно играть дальше, но прогресс этой сессии не сохранится.</p>
       )}
 
+      <div className="achievement-bar">
+        <button type="button" className="achievements-open" onClick={() => { setAchievementsOpen(true); setNotices([]) }}>Достижения · {game.achievements.length} из {ACHIEVEMENTS.length}</button>
+        {notices.length > 0 && <div role="status">Новое достижение: {notices.join(', ')} <button type="button" onClick={() => setNotices([])}>Закрыть</button></div>}
+      </div>
       <div className="game-layout">
         <div className="story-column">
           <section className="room" aria-label="Комната Маши: временная иллюстрация">
@@ -177,6 +191,7 @@ export default function App() {
           </section>}
         </div>
       </div>
+      {achievementsOpen && <AchievementsDialog unlocked={game.achievements} onClose={() => { setAchievementsOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.achievements-open')?.focus()) }} />}
       {shopOpen && <ShopDialog game={game} onPurchase={handlePurchase} onClose={closeShop} onNextDay={nextDay} saveProblem={storage === 'unavailable' || writeFailed} />}
       {goosePending && <GooseDialog game={game} pending={goosePending} onChoose={handleGooseChoice} onContinue={() => { goose.dismiss(); handleGooseContinue(); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.action-grid button:not(:disabled)')?.focus()) }} saveProblem={storage === 'unavailable' || writeFailed} />}
       {events.pending && <EventDialog pending={events.pending} game={game} onChoose={handleEventChoice} onContinue={closeEvent} saveProblem={storage === 'unavailable' || writeFailed} />}

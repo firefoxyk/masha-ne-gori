@@ -43,6 +43,7 @@ test('проект проходит через обновление и день,
   await dialog.locator('summary').filter({ hasText: 'Зелёный уголок' }).click()
   await dialog.getByRole('button', { name: 'Прочитать событие: Зелёный уголок' }).click()
   await expect(dialog.locator('#project-group-completed').locator('..').getByText('Состояние: завершён; шагов выполнено 2 из 2.')).toBeVisible()
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).game.achievements, SAVE_KEY)).toContain('project')
   await expect(dialog.locator('#project-group-completed').locator('..').getByText(/Кажется, кто-то из нас действительно растёт/)).toBeVisible()
   await dialog.getByRole('button', { name: 'Вернуться в игру' }).click()
   await page.reload()

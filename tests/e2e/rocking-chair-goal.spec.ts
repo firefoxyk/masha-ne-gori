@@ -17,6 +17,7 @@ test('покупка с клавиатуры показывает фактиче
   await button.focus()
   await page.keyboard.press('Enter')
   await expect(shop.getByRole('status')).toContainText('Кукуха: +2')
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).game.achievements, SAVE_KEY)).toContain('rocking-chair')
   await expect(shop.getByText(/Кресло-качалка куплено/)).toBeVisible()
   await expect(shop.getByText('Игровые монеты: 0')).toBeVisible()
   await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).game.ownedItems.includes('rocking-chair'), SAVE_KEY)).toBe(true)

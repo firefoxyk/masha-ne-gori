@@ -226,3 +226,9 @@ progress { height: 7px; margin-top: 3px; }
 .event-note { margin-top: 12px; font-size: .9rem; }
 .event-dialog button { display: block; width: 100%; min-height: 48px; margin-top: 10px; padding: 10px; border: 2px solid #8f483e; border-radius: 12px; background: #a9554b; color: #fffaf0; font-weight: 700; cursor: pointer; }
 .event-dialog button:disabled { border-color: #bca68e; background: #e3d3bd; color: #665749; }
+
+.achievement-bar { margin: 4px 0; font-size: .85rem; }
+.achievement-bar button { min-height: 36px; }
+.achievement-bar [role="status"] { padding: 4px 8px; background: #fff1d7; color: #503629; border-radius: 8px; }
+.achievement-list { padding-left: 1.4em; }
+.achievement-list li { margin: 0 0 10px; }

@@ -1,3 +1,4 @@
+import { awardAchievements } from '../game/achievements'
 import { useEffect, useState } from 'react'
 import { performAction } from '../game/actions'
 import type { ActionId } from '../game/actions'
@@ -72,7 +73,7 @@ export function useGame() {
       let events = stories === selected.littleStories || (!selected.littleStories && !stories.pending) ? selected : { ...selected, littleStories: stories }
       if (work !== previousWork) events = { ...events, work }
       const clear = !events.pending && !events.work?.pending && !events.rest?.pending && !events.meal?.pending && !events.littleStories?.pending
-      return { ...current, game: result.state, events, message: result.message, gooseSignal: current.gooseSignal + (result.success && clear ? 1 : 0), revision: current.revision + (result.success ? 1 : 0) }
+      return { ...current, game: result.success && action === 'rest' ? awardAchievements(result.state, 'care') : result.state, events, message: result.message, gooseSignal: current.gooseSignal + (result.success && clear ? 1 : 0), revision: current.revision + (result.success ? 1 : 0) }
     })
   }
   function handleFinishDay() {
@@ -93,7 +94,7 @@ export function useGame() {
   function handlePurchase(id: ProductId) {
     setView((current) => {
       const result = purchase(current.game, id)
-      return result.success ? { ...current, game: result.state, revision: current.revision + 1 } : current
+      return result.success ? { ...current, game: id === 'rocking-chair' ? awardAchievements(result.state, 'rocking-chair') : result.state, revision: current.revision + 1 } : current
     })
   }
   function handleProject(id: ProjectId, command: ProjectCommand, choice?: string) {
@@ -106,7 +107,7 @@ export function useGame() {
       if (!result.success) return current
       const stories = maybeStartLittleStory(current.events.littleStories ?? createLittleStorySession(), result.state.actionsRemaining < current.game.actionsRemaining, storyRoll, storyPick, result.state)
       const events = stories === current.events.littleStories || (!current.events.littleStories && !stories.pending) ? current.events : { ...current.events, littleStories: stories }
-      return { ...current, events, game: result.state, message: result.message, revision: current.revision + 1 }
+      return { ...current, events, game: result.state.projects[id]?.status === 'completed' && current.game.projects[id]?.status !== 'completed' ? awardAchievements(result.state, 'project') : result.state, message: result.message, revision: current.revision + 1 }
     })
   }
   function handleDelegateProject(id: DelegatedProject) {
@@ -153,7 +154,7 @@ export function useGame() {
     setView((current) => {
       if (!current.events.rest) return current
       const result = chooseRest(current.game, current.events.rest, id, random)
-      return result.game === current.game ? current : { ...current, game: result.game, events: { ...current.events, rest: result.rest }, revision: current.revision + 1 }
+      return result.game === current.game ? current : { ...current, game: awardAchievements(result.game, 'care'), events: { ...current.events, rest: result.rest }, revision: current.revision + 1 }
     })
   }
   function handleRestContinue() {
@@ -253,7 +254,7 @@ export function useGame() {
       const job = current.events.assistantJob
       if (!job || current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending) return current
       const updated = command === 'note' ? { game: current.game, job: noteAssistantReport(job) } : command === 'correct' ? { game: current.game, job: requestAssistantCorrection(current.game, job) } : command === 'open-correction' ? { game: current.game, job: openAssistantCorrection(current.game, job) } : resolveAssistantReport(current.game, job)
-      return updated.job === job ? current : { ...current, game: updated.game, events: { ...current.events, assistantJob: updated.job }, revision: current.revision + 1 }
+      return updated.job === job ? current : { ...current, game: command === 'note' ? awardAchievements(updated.game, 'review') : updated.game, events: { ...current.events, assistantJob: updated.job }, revision: current.revision + 1 }
     })
   }
   function startNewGame() {
@@ -270,7 +271,7 @@ export function useGame() {
     setView(current => {
       if (!current.events.goose) return current
       const result = chooseGoose(current.game, current.events.goose, id)
-      return result.session === current.events.goose ? current : { ...current, game: result.game, events: { ...current.events, goose: result.session }, revision: current.revision + 1 }
+      return result.session === current.events.goose ? current : { ...current, game: awardAchievements(result.game, 'goose'), events: { ...current.events, goose: result.session }, revision: current.revision + 1 }
     })
   }
   function handleGooseContinue() {

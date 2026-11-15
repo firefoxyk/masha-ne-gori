@@ -28,6 +28,7 @@ test('гусь ждёт выбора, восстановление не повт
   dialog = page.getByRole('dialog', { name: 'Гость с крыльями' })
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: /Поговорить —/ }).click()
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).game.achievements, SAVE_KEY)).toContain('goose')
   await expect(dialog.getByText(/обстоятельным «га»/)).toBeVisible()
   await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).events.goose?.pending?.choice, SAVE_KEY)).toBe('talk')
   const value = await page.getByRole('progressbar', { name: 'Кукуха' }).getAttribute('value')

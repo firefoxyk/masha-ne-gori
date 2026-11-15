@@ -27,7 +27,11 @@ export interface DayValues {
   unfinishedProjects: number
 }
 
+export const ACHIEVEMENT_IDS = ['care', 'review', 'project', 'rocking-chair', 'goose'] as const
+export type AchievementId = typeof ACHIEVEMENT_IDS[number]
+
 export interface GameState extends DayValues {
+  achievements: AchievementId[]
   day: number
   dayStatus: DayStatus
   actionsRemaining: number
@@ -89,6 +93,7 @@ export function createInitialGameState(random: () => number = Math.random): Game
   const projectIdeas = chooseProjectIdeas({ day: 1, projects: {}, projectCompletions: {} }, random)
   return {
     day: 1,
+    achievements: [],
     ...values,
     dayStatus: 'active',
     actionsRemaining: ACTIONS_PER_DAY,
@@ -133,6 +138,7 @@ function isValidJournalEntry(id: ProjectId, entry: ProjectJournalEntry, day: num
 export function isValidGameState(state: GameState): boolean {
   const projects = state.projects
   return (
+    Array.isArray(state.achievements) && state.achievements.every((id) => ACHIEVEMENT_IDS.includes(id)) && new Set(state.achievements).size === state.achievements.length &&
     isValidDayValues(state) && isValidDayValues(state.dayStart) &&
     Number.isSafeInteger(state.day) && state.day >= 1 &&
     (state.dayStatus === 'active' || state.dayStatus === 'finished') &&
