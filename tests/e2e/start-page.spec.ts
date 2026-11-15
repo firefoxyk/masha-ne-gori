@@ -9,6 +9,8 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 375, height: 812 }
   test(`экран прототипа при ширине ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport)
     await page.goto('/')
+    // Знакомство намеренно допускает прокрутку; проверяем обычный экран после него.
+    await page.getByRole('button', { name: 'Закрыть подсказку: Знакомьтесь: Маша' }).click()
 
     await expect(page.getByRole('heading', { name: 'Маша, не гори' })).toBeVisible()
     await expect(page.getByText(`День ${initial.day}`, { exact: true })).toBeVisible()
@@ -49,6 +51,7 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 375, height: 812 }
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width)
       expect(bounds!.height).toBeGreaterThanOrEqual(44)
     }
+    await page.getByRole('button', { name: 'Проекты Маши' }).focus()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'Поработать' })).toBeFocused()
     await page.keyboard.press('Enter')

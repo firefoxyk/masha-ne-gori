@@ -13,6 +13,12 @@ export function finishDay(state: GameState): GameState {
   return { ...state, dayStatus: 'finished', dayEnd: getDayValues(state), consumablesBought: 0 }
 }
 
+// Игрок сам выбирает передышку; повторный вызов завершённого дня ничего не меняет.
+export function finishExhaustedDay(state: GameState): GameState {
+  if (state.dayStatus !== 'active' || state.energy !== 0) return state
+  return finishDay({ ...state, energy: 10 })
+}
+
 export function getDaySummary(state: GameState): DaySummary {
   const endValues = getDayValues(state.dayEnd ?? state)
   return {

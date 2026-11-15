@@ -184,6 +184,9 @@ progress { height: 7px; margin-top: 3px; }
 @media (max-height: 560px) {
   .game-shell { height: auto; min-height: 100dvh; }
 }
+@media (max-width: 340px) and (min-height: 561px) and (max-height: 680px) {
+  .room { min-height: 110px; }
+}
 @media (max-width: 270px) {
   .game-shell { height: auto; min-height: 100dvh; }
   .room-art { width: 100%; height: auto; }
@@ -200,6 +203,8 @@ progress { height: 7px; margin-top: 3px; }
 .warning-detail { position: absolute; z-index: 3; top: calc(100% + 4px); left: 8px; right: 8px; padding: 10px 12px; border: 2px solid #93452c; border-radius: 12px; background: #fff3db; color: #493125; box-shadow: 0 3px 8px #50362955; }
 .warning-detail button { display: block; min-height: 44px; margin: 6px 0 0 auto; padding: 4px 14px; border: 1px solid #93452c; border-radius: 9px; background: #fff8e9; color: #70321e; font-weight: 700; cursor: pointer; }
 .actions .day-finished { margin: 0 0 6px; padding: 5px 8px; font-size: .78rem; line-height: 1.25; }
+.game-shell:has(.exhaustion) { height: auto; min-height: 100dvh; }
+.exhaustion button { min-height: 44px; margin-top: 5px; padding: 6px 10px; border: 1px solid #455638; border-radius: 9px; background: #586e42; color: #fffaf0; font-weight: 700; cursor: pointer; }
 
 .day-summary h2:focus-visible { outline: 3px solid #59362a; outline-offset: 3px; }
 .shop-open { margin-bottom: 10px; background: #586e42; border-color: #455638; box-shadow: 0 3px 0 #455638; }

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { performAction } from './actions'
-import { finishDay, startNextDay } from './day'
+import { finishDay, finishExhaustedDay, getDaySummary, startNextDay } from './day'
 import { createInitialGameState, isValidGameState } from './state'
 import { getStateWarnings } from './warnings'
 
 describe('предупреждения о состоянии', () => {
   it.each([
-    ['energy', 'Энергия на исходе. Пора отдохнуть и набраться сил.'],
-    ['satiety', 'Маша проголодалась. Пора поесть; если денег мало, можно поработать.'],
-    ['sanity', 'Кукуха устала. Немного отдыха ей точно пригодится.'],
+    ['energy', 'Энергия на исходе. Бесплатный отдых поможет набраться сил.'],
+    ['satiety', 'Маша проголодалась. Можно поесть.'],
+    ['sanity', 'Кукуха устала. Бесплатный отдых ей поможет.'],
   ] as const)('показывает %s при 30 и ниже и убирает при 31', (field, message) => {
     const initial = createInitialGameState()
     expect(getStateWarnings({ ...initial, [field]: 31 })).not.toContain(message)
@@ -20,7 +20,7 @@ describe('предупреждения о состоянии', () => {
     const state = { ...createInitialGameState(), energy: 20, sanity: 25, satiety: 20 }
     expect(getStateWarnings(state)).toHaveLength(3)
     const rested = performAction(state, 'rest').state
-    expect(getStateWarnings(rested)).toEqual(['Маша проголодалась. Пора поесть; если денег мало, можно поработать.'])
+    expect(getStateWarnings(rested)).toEqual(['Маша проголодалась. Можно поесть.'])
     const fed = performAction(rested, 'eat').state
     expect(getStateWarnings(fed)).toEqual([])
   })
@@ -33,6 +33,25 @@ describe('предупреждения о состоянии', () => {
 })
 
 describe('выход из тяжёлого состояния', () => {
+  it('при нуле энергии по выбору завершает день, учитывает передышку в итогах и не повторяет её', () => {
+    const state = { ...createInitialGameState(), energy: 0, actionsRemaining: 2, money: 0, satiety: 0 }
+    expect(finishExhaustedDay({ ...state, energy: 1 }).dayStatus).toBe('active')
+    const finished = finishExhaustedDay(state)
+    expect(state.energy).toBe(0)
+    expect(finished.energy).toBe(10)
+    expect(finished.actionsRemaining).toBe(2)
+    expect(getDaySummary(finished).endValues.energy).toBe(10)
+    expect(getDaySummary(finished).actionsUsed).toBe(3)
+    expect(finishExhaustedDay(finished)).toBe(finished)
+    const next = startNextDay(finished)
+    expect(next.energy).toBe(10)
+    expect(performAction(next, 'rest').success).toBe(true)
+  })
+  it('предлагает доступный бесплатный перекус и учитывает отсутствие ходов', () => {
+    const state = { ...createInitialGameState(), energy: 0, satiety: 0, money: 0 }
+    expect(getStateWarnings(state).join(' ')).toContain('бесплатный перекус')
+    expect(getStateWarnings({ ...state, actionsRemaining: 0 }).join(' ')).toContain('На следующий день')
+  })
   it('без денег и сил может отдохнуть, заработать и поесть', () => {
     let state = { ...createInitialGameState(), energy: 0, satiety: 0, sanity: 0, money: 0 }
     const initial = structuredClone(state)

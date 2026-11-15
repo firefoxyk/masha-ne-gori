@@ -2,7 +2,7 @@ import { awardAchievements } from '../game/achievements'
 import { useEffect, useState } from 'react'
 import { performAction } from '../game/actions'
 import type { ActionId } from '../game/actions'
-import { finishDay, startNextDay } from '../game/day'
+import { finishDay, finishExhaustedDay, startNextDay } from '../game/day'
 import { createInitialGameState } from '../game/state'
 import { loadGame, saveGame } from './gameStorage'
 import { purchase } from '../game/shop'
@@ -87,6 +87,13 @@ export function useGame() {
   function handleFinishDay() {
     setView((current) => current.events.goose?.pending || current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending || current.game.dayStatus !== 'active' ? current : {
       ...current, game: finishDay(current.game), message: 'День завершён. Мы справились!', revision: current.revision + 1,
+    })
+  }
+  function handleExhaustedDay() {
+    setView(current => {
+      if (current.events.goose?.pending || current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending) return current
+      const game = finishExhaustedDay(current.game)
+      return game === current.game ? current : { ...current, game, message: 'Маша решила остановиться и немного восстановить силы.', revision: current.revision + 1 }
     })
   }
   function handleNextDay() {
@@ -301,5 +308,5 @@ export function useGame() {
     })
   }
 
-  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip, writeFailed }
 }

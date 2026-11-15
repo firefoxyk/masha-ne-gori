@@ -42,7 +42,7 @@ import { nextTip } from './game/onboarding'
 import OnboardingTip from './OnboardingTip'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleExhaustedDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleOpenStory, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseScheduled, handleGooseChoice, handleGooseContinue, startNewGame, dismissTip } = useGame()
   const goosePending = events.goose?.pending
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [achievementsOpen, setAchievementsOpen] = useState(false)
@@ -182,6 +182,7 @@ export default function App() {
             </div>
             {(tip === 'projects' || tip === 'queue') && <OnboardingTip id={tip} onDismiss={dismissTip} />}
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
+            {game.energy === 0 && <div className="day-finished exhaustion" role="status"><p>Маша совсем устала. Можно закончить день и спокойно передохнуть: +10 энергии без расхода действия. {game.actionsRemaining > 0 ? 'Или выберите обычный отдых.' : 'Завтра снова будут действия.'}</p><button type="button" onClick={() => { focusSummary.current = true; handleExhaustedDay() }}>Закончить день и передохнуть</button></div>}
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
             <div className="action-grid">
               {actionIds.map((id) => {
