@@ -21,6 +21,8 @@ import { sendAssistantTask, sendAssistantJob, claimAssistantJob } from '../game/
 import type { AssistantJobId } from '../game/assistant'
 import { noteAssistantReport, openAssistantCorrection, requestAssistantCorrection, resolveAssistantReport } from '../game/assistantReview'
 import { chooseWorkEvent, createWorkSession, selectWorkEvent } from '../game/workEvents'
+import { chooseGoose, openGoose } from '../game/gooseInteraction'
+import type { GooseChoice } from '../game/gooseInteraction'
 
 const initialMessage = 'Сегодня всё получится. А если нет — сначала поедим.'
 
@@ -49,7 +51,7 @@ export function useGame() {
     const storyRoll = Math.random(), storyPick = Math.random()
     const workRoll = Math.random(), workPick = Math.random()
     setView((current) => {
-      if (current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending) return current
+      if (current.events.goose?.pending || current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending) return current
       if (action === 'rest') {
         const special = startSpecialRest(current.game, current.events.rest ?? createRestSession(), specialRoll)
         if (special.started) return { ...current, game: special.game, events: { ...current.events, rest: special.rest }, revision: current.revision + 1 }
@@ -74,7 +76,7 @@ export function useGame() {
     })
   }
   function handleFinishDay() {
-    setView((current) => current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending || current.game.dayStatus !== 'active' ? current : {
+    setView((current) => current.events.goose?.pending || current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending || current.game.dayStatus !== 'active' ? current : {
       ...current, game: finishDay(current.game), message: 'День завершён. Мы справились!', revision: current.revision + 1,
     })
   }
@@ -257,6 +259,27 @@ export function useGame() {
   function startNewGame() {
     setView((current) => ({ ...current, game: createInitialGameState(), events: createEventSession(), message: initialMessage, storage: 'ready', revision: current.revision + 1 }))
   }
+  function handleGooseOpen() {
+    setView(current => {
+      if (current.events.pending || current.events.work?.pending || current.events.rest?.pending || current.events.meal?.pending || current.events.littleStories?.pending) return current
+      const goose = openGoose(current.game, current.events.goose)
+      return goose === current.events.goose ? current : { ...current, events: { ...current.events, goose }, revision: current.revision + 1 }
+    })
+  }
+  function handleGooseChoice(id: GooseChoice) {
+    setView(current => {
+      if (!current.events.goose) return current
+      const result = chooseGoose(current.game, current.events.goose, id)
+      return result.session === current.events.goose ? current : { ...current, game: result.game, events: { ...current.events, goose: result.session }, revision: current.revision + 1 }
+    })
+  }
+  function handleGooseContinue() {
+    setView(current => {
+      const goose = current.events.goose
+      if (!goose?.pending?.choice) return current
+      return { ...current, events: { ...current.events, goose: { ...goose, pending: null } }, revision: current.revision + 1 }
+    })
+  }
 
-  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, startNewGame, writeFailed }
+  return { ...view, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantTask, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, handleGooseOpen, handleGooseChoice, handleGooseContinue, startNewGame, writeFailed }
 }

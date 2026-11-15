@@ -34,7 +34,7 @@ for (const { name, viewport } of [
     await expect(page.getByText('Осталось действий: 3')).toBeVisible()
     await expect(goose).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    await page.clock.fastForward(8001)
+    await page.clock.fastForward(20001)
     await expect(goose).toHaveCount(0)
     await page.reload()
     await expect(goose).toHaveCount(0)

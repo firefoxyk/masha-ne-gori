@@ -16,6 +16,8 @@ import { isValidAssistantTask, isValidAssistantJob } from './assistant.ts'
 import type { AssistantTask, AssistantJob } from './assistant.ts'
 import { isValidWorkSession } from './workEvents.ts'
 import type { WorkSession } from './workEvents.ts'
+import { isValidGooseSession } from './gooseInteraction.ts'
+import type { GooseSession } from './gooseInteraction.ts'
 
 type EventChanges = Partial<DayValues> & { actionsRemaining?: number }
 
@@ -29,6 +31,7 @@ export interface EventSession {
   assistantLegacyRead?: boolean
   assistantJob?: AssistantJob
   work?: WorkSession
+  goose?: GooseSession
 }
 
 export function createEventSession(): EventSession {
@@ -72,6 +75,7 @@ export function continueEvent(session: EventSession): EventSession {
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 export function isValidEventSession(value: unknown, game: GameState): value is EventSession {
   if (!record(value) || !record(value.history)) return false
+  if (value.goose !== undefined && (!isValidGooseSession(value.goose, game) || (record(value.goose) && value.goose.pending !== null && (value.pending !== null || (record(value.work) && value.work.pending !== null) || (record(value.rest) && value.rest.pending !== null) || (record(value.meal) && value.meal.pending !== null) || (record(value.littleStories) && value.littleStories.pending !== null))))) return false
   if (value.assistantTask !== undefined && !isValidAssistantTask(value.assistantTask, game)) return false
   if (value.assistantLegacyRead !== undefined && (typeof value.assistantLegacyRead !== 'boolean' || !value.assistantTask)) return false
   if (value.assistantJob !== undefined && !isValidAssistantJob(value.assistantJob, game)) return false

@@ -10,6 +10,6 @@ describe('случайное появление гуся', () => {
     expect(random).not.toHaveBeenCalled()
     expect(shouldShowGoose(2, 1, random)).toBe(true)
     expect(shouldShowGoose(2, null, () => NaN)).toBe(false)
-    expect(GOOSE_VISIT_MS).toBe(8000)
+    expect(GOOSE_VISIT_MS).toBe(20000)
   })
 })
