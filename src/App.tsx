@@ -1,4 +1,5 @@
-import roomImage from './assets/starter-room.webp'
+import roomImage from './assets/starter-room-no-goose.png'
+import gooseImage from './assets/room-items/goose.png'
 import plantImage from './assets/room-items/plant.png'
 import pillowImage from './assets/room-items/pillow.png'
 import blanketImage from './assets/room-items/blanket.png'
@@ -33,9 +34,11 @@ import LittleStoryDialog from './LittleStoryDialog'
 import AssistantDialog from './AssistantDialog'
 import { assistantUnlocked } from './game/assistant'
 import ProjectsDialog from './ProjectsDialog'
+import { useGooseAppearance } from './useGooseAppearance'
 
 export default function App() {
-  const { game, events, message, storage, writeFailed, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, startNewGame } = useGame()
+  const { game, events, message, storage, writeFailed, gooseSignal, handleAction, handleFinishDay, handleNextDay, handlePurchase, handleProject, handleDelegateProject, handleEventChoice, handleEventContinue, handleWorkChoice, handleWorkContinue, handleRestChoice, handleRestContinue, handleMealChoice, handleMealCancel, handleMealContinue, handleLittleChoice, handleLittleContinue, handleAssistantJob, handleAssistantClaim, handleAssistantRead, handleAssistantReview, handleLegacyRead, startNewGame } = useGame()
+  const gooseVisible = useGooseAppearance(gooseSignal, game.day, game.dayStatus === 'active')
   const actionIds: ActionId[] = ['work', 'eat', 'rest']
   const [openWarning, setOpenWarning] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
@@ -99,7 +102,7 @@ export default function App() {
         <div className="story-column">
           <section className="room" aria-label="Комната Маши: временная иллюстрация">
             <div className={`room-art${game.ownedItems.includes('bookshelf') ? ' room-has-bookshelf' : ''}${message.length > 90 ? ' room-long-speech' : ''}`}>
-              <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением; в дверь заглядывает гусь" />
+              <img src={roomImage} alt="Маша за рабочим столом в уютной комнате с кроватью, кухней и растением" />
               {hasSofa(game) && <img className="room-item room-item-sofa" src={sofaImage} alt="Уютный диван в комнате" />}
               {game.ownedItems.includes('rocking-chair') && <img className="room-item room-item-rocking-chair" src={rockingChairImage} alt="Купленное кресло-качалка в комнате" />}
               {game.ownedItems.includes('bookshelf') && <img className="room-item room-item-bookshelf" src={bookshelfImage} alt="Купленный книжный шкаф у стены" />}
@@ -116,6 +119,8 @@ export default function App() {
               {game.ownedItems.includes('egg-pillow') && <img className="room-item room-item-egg-pillow" src={eggPillowImage} alt="Купленная подушка-яичница на кровати" />}
               {game.ownedItems.includes('lamp') && <img className="room-item room-item-lamp" src={lampImage} alt="Купленная лампа на рабочем столе" />}
               {game.ownedItems.includes('mug') && <img className="room-item room-item-mug" src={mugImage} alt="Купленная любимая кружка на рабочем столе" />}
+              {gooseVisible && <img className="room-item room-item-goose" src={gooseImage} alt="" aria-hidden="true" />}
+              <span className="visually-hidden" aria-live="polite">{gooseVisible ? hasSofa(game) ? 'Гусь заглянул в комнату и с любопытством смотрит на диван.' : 'Гусь заглянул в комнату.' : ''}</span>
               <section className="speech" aria-label="Реплика Маши">
                 <p aria-live="polite">{message}</p>
               </section>

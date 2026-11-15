@@ -30,6 +30,7 @@ export function useGame() {
     return {
       game: loaded.kind === 'loaded' ? loaded.game : createInitialGameState(),
       events: loaded.kind === 'loaded' ? loaded.events : createEventSession(),
+      gooseSignal: 0,
       message: loaded.kind === 'loaded' && loaded.game.dayStatus === 'finished' ? 'День завершён. Мы справились!' : initialMessage,
       storage: loaded.kind === 'invalid' ? 'invalid' as const : loaded.kind === 'unavailable' ? 'unavailable' as const : 'ready' as const,
       revision: loaded.kind === 'loaded' || loaded.kind === 'empty' ? 1 : 0,
@@ -68,7 +69,8 @@ export function useGame() {
       const stories = maybeStartLittleStory(selected.littleStories ?? createLittleStorySession(), result.success && !work.pending, storyRoll, storyPick, result.state)
       let events = stories === selected.littleStories || (!selected.littleStories && !stories.pending) ? selected : { ...selected, littleStories: stories }
       if (work !== previousWork) events = { ...events, work }
-      return { ...current, game: result.state, events, message: result.message, revision: current.revision + (result.success ? 1 : 0) }
+      const clear = !events.pending && !events.work?.pending && !events.rest?.pending && !events.meal?.pending && !events.littleStories?.pending
+      return { ...current, game: result.state, events, message: result.message, gooseSignal: current.gooseSignal + (result.success && clear ? 1 : 0), revision: current.revision + (result.success ? 1 : 0) }
     })
   }
   function handleFinishDay() {
