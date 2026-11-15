@@ -138,7 +138,7 @@ export default function App() {
               {game.ownedItems.includes('mug') && <img className="room-item room-item-mug" src={mugImage} alt="Купленная любимая кружка на рабочем столе" />}
               {gooseVisible && <button type="button" className="room-goose" aria-label="Поговорить с гусём" onClick={handleGooseOpen}><img className="room-item-goose" src={gooseImage} alt="" /><span>Гусь!</span></button>}
               <span className="visually-hidden" aria-live="polite">{gooseVisible ? hasSofa(game) ? 'Гусь заглянул в комнату и с любопытством смотрит на диван.' : 'Гусь заглянул в комнату.' : ''}</span>
-              <section className="speech" aria-label="Реплика Маши">
+              <section className="speech" aria-label="Реплика Маши" tabIndex={message.length > 90 ? 0 : undefined}>
                 <p aria-live="polite">{message}</p>
               </section>
             </div>
@@ -169,6 +169,10 @@ export default function App() {
 
           {summary ? <DaySummaryPanel summary={summary} focusOnMount={focusSummary.current} onNextDay={nextDay} onShop={() => setShopOpen(true)} /> : <section className="panel actions" aria-labelledby="actions-title">
             <h2 className="visually-hidden" id="actions-title">Чем займёмся?</h2>
+            <div className="game-navigation">
+              <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
+              {assistantUnlocked(game) && <button type="button" className="projects-open assistant-open" onClick={() => setAssistantOpen(true)}>ИИ-помощник{(events.assistantJob && (events.assistantJob.actual === null || events.assistantJob.read === false || (events.assistantJob.reportId && !events.assistantJob.read)) && game.day > (events.assistantJob.review === 'correcting' ? events.assistantJob.correctionDay! : events.assistantJob.submittedDay)) || (events.assistantTask && !events.assistantLegacyRead && game.day > events.assistantTask.submittedDay) ? ' · ответ готов' : ''}</button>}
+            </div>
             <p className="actions-count">Осталось действий: <strong>{game.actionsRemaining}</strong></p>
             {commonReason && <p className="day-finished" id="common-reason" role="status">{commonReason}</p>}
             <div className="action-grid">
@@ -186,8 +190,6 @@ export default function App() {
                 <p className="action-description" id="end-day-description">Можно закончить день в любой момент.</p>
               </div>
             </div>
-            <button type="button" className="projects-open" onClick={() => setProjectsOpen(true)}>Проекты Маши{PROJECT_IDS.some((id) => nextProjectStory(game, id)) ? ' · новое событие' : ''}</button>
-            {assistantUnlocked(game) && <button type="button" className="projects-open assistant-open" onClick={() => setAssistantOpen(true)}>ИИ-помощник{(events.assistantJob && (events.assistantJob.actual === null || events.assistantJob.read === false || (events.assistantJob.reportId && !events.assistantJob.read)) && game.day > (events.assistantJob.review === 'correcting' ? events.assistantJob.correctionDay! : events.assistantJob.submittedDay)) || (events.assistantTask && !events.assistantLegacyRead && game.day > events.assistantTask.submittedDay) ? ' · ответ готов' : ''}</button>}
           </section>}
         </div>
       </div>

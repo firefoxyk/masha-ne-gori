@@ -113,6 +113,9 @@ progress { height: 7px; margin-top: 3px; }
 .resources div { display: flex; align-items: baseline; gap: 5px; }
 .resources dt { font-size: .75rem; }
 .resources dd { margin: 0; font-size: .9rem; }
+.resources div { min-width: 0; }
+.resources dt, .stat-heading label, .action-grid button, .action-description { overflow-wrap: anywhere; }
+.stat-heading label { min-width: 0; }
 .room { flex: 1; min-height: 175px; display: flex; align-items: center; justify-content: center; border-radius: 5px 5px 0 0; border-bottom: 0; box-shadow: none; }
 .room-art { position: relative; flex: 0 1 auto; height: 100%; min-height: 0; min-width: 0; max-height: 100%; max-width: 100%; aspect-ratio: 1122 / 1402; }
 /* Размер сцены соответствует реальному рисунку, когда по ширине остаются поля. */
@@ -154,6 +157,8 @@ progress { height: 7px; margin-top: 3px; }
 .game-shell:has(.room-has-bookshelf.room-long-speech) .room { container-type: normal; }
 .game-shell:has(.room-has-bookshelf.room-long-speech) .room-art { width: 100%; height: auto; max-height: none; }
 .room-has-bookshelf.room-long-speech .speech { left: 4%; max-width: 92%; }
+.room-long-speech .speech { max-height: 65%; overflow-y: auto; }
+.room-long-speech .speech:focus-visible { outline: 3px solid #59362a; outline-offset: 2px; }
 .actions { padding: 9px 10px 11px; border-radius: 0 0 15px 15px; }
 .actions-count { margin: 0 0 6px; text-align: center; font-size: .8rem; }
 .action-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }

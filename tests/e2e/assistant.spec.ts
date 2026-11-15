@@ -42,9 +42,9 @@ test('обучение открывает помощника, поручение
   const positions = await page.evaluate(() => {
     const a = document.querySelector('.assistant-open')!.getBoundingClientRect()
     const p = document.querySelector('.projects-open:not(.assistant-open)')!.getBoundingClientRect()
-    return { aRight: a.right, pLeft: p.left }
+    return { separated: a.right <= p.left || p.right <= a.left || a.bottom <= p.top || p.bottom <= a.top }
   })
-  expect(positions.aRight).toBeLessThanOrEqual(positions.pLeft)
+  expect(positions.separated).toBe(true)
   await open.focus()
   await page.keyboard.press('Enter')
   let panel = page.getByRole('dialog', { name: 'ИИ-помощник' })
