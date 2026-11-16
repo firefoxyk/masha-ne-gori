@@ -74,7 +74,7 @@ test('обучение открывает помощника, поручение
   await expect(page.getByRole('dialog', { name: 'ИИ-помощник' })).not.toContainText('explanation')
   await expect(page.getByRole('dialog', { name: 'ИИ-помощник' }).getByRole('button', { name: /Помоги с рабочей задачей/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Принять результат' }).click()
-  await page.getByRole('button', { name: 'Завершить проверку' }).click()
+  await page.getByRole('button', { name: 'Закрыть отчёт' }).click()
   await expect(page.getByRole('button', { name: /Помоги с рабочей задачей/ })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

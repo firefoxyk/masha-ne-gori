@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CONSUMABLE_LIMIT } from './game/state'
 import type { GameState } from './game/state'
-import { PRODUCTS, purchaseReason } from './game/shop'
+import { PRODUCTS, previewPurchaseEffects, purchaseReason } from './game/shop'
 import type { ProductId } from './game/shop'
 import rockingChairImage from './assets/room-items/rocking-chair.png'
 
@@ -10,6 +10,8 @@ const categories = [
   { name: 'Уют', icon: '🌿', ids: ['plant', 'vine', 'garland', 'pillow', 'blanket', 'egg-pillow', 'pillow-set', 'nightstand', 'crystal-light', 'wall-photos', 'window-plant', 'chair', 'rocking-chair', 'sofa', 'bookshelf'] },
   { name: 'Удобство', icon: '☕', ids: ['mug', 'lamp', 'monitor'] },
 ] as const satisfies readonly { name: string; icon: string; ids: readonly ProductId[] }[]
+
+const statNames = { satiety: 'Сытость', sanity: 'Кукуха', motivation: 'Мотивация' }
 
 export default function ShopDialog({ game, onPurchase, onClose, onNextDay, saveProblem }: { game: GameState; onPurchase: (id: ProductId) => void; onClose: () => void; onNextDay: () => void; saveProblem: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -57,7 +59,7 @@ export default function ShopDialog({ game, onPurchase, onClose, onNextDay, saveP
             <div className="shop-item-heading"><h3>{product.name}</h3><span>{product.price} монет</span></div>
             {product.id === 'rocking-chair' && <img className="shop-product-image" src={rockingChairImage} alt="Кресло-качалка с мягкими подушками" />}
             {'description' in product && <p>{product.description}</p>}
-            <p>Сразу: {product.immediate}</p>
+            {reason === 'Куплено' || received ? <p>Эффект покупки: {product.immediate}</p> : <p>Сразу сейчас: {previewPurchaseEffects(game, product.id).map(({ stat, amount, actual }) => `${statNames[stat]} +${actual}${actual === 0 ? ' — уже максимум' : actual < amount ? ` (из +${amount})` : ''}`).join(', ')}</p>}
             {product.bonus !== 'Нет' && <p>Постоянно: {product.bonus}</p>}
             {reason && <p id={`reason-${product.id}`} className="shop-reason">{reason}</p>}
             <button type="button" disabled={!!reason} aria-describedby={reason ? `reason-${product.id}` : undefined} onClick={() => onPurchase(product.id)} aria-label={`${reason === 'Куплено' ? 'Куплено' : received ? 'Получено в проекте' : 'Купить'}: ${product.name}`}>{reason === 'Куплено' ? 'Куплено' : received ? 'Получено в проекте' : 'Купить'}</button>

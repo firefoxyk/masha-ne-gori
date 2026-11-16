@@ -31,6 +31,16 @@ export const PRODUCTS = [
 ] as const satisfies readonly Product[]
 export type ProductId = typeof PRODUCTS[number]['id']
 
+// Предварительный эффект использует те же числовые данные и границу, что покупка.
+export function previewPurchaseEffects(state: GameState, id: ProductId) {
+  const product = PRODUCTS.find((item) => item.id === id)!
+  const effects: Effects = product.effects
+  return (['satiety', 'sanity', 'motivation'] as const).flatMap((stat) => {
+    const amount = effects[stat]
+    return amount === undefined ? [] : [{ stat, amount, actual: Math.min(STAT_MAX, state[stat] + amount) - state[stat] }]
+  })
+}
+
 // Для зависимых покупок можно добавить новые пары ID без изменения логики покупки.
 const prerequisites: Partial<Record<ProductId, { item: ItemId; reason: string }>> = {
   'crystal-light': { item: 'nightstand', reason: 'Сначала нужна прикроватная тумбочка' },

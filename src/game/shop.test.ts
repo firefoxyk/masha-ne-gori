@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createInitialGameState } from './state'
 import { finishDay, getDaySummary, startNextDay } from './day'
 import { getActionDescription, performAction } from './actions'
-import { PRODUCTS, purchase, purchaseReason } from './shop'
+import { PRODUCTS, previewPurchaseEffects, purchase, purchaseReason } from './shop'
 import { loadGame, saveGame } from '../storage/gameStorage'
 import { createEventSession } from './eventSession'
 import { recordEventShown, recordEventCompleted } from './eventSelection'
@@ -10,6 +10,19 @@ import { recordEventShown, recordEventCompleted } from './eventSelection'
 const richDay = () => finishDay({ ...createInitialGameState(), money: 1000, energy: 40, satiety: 40, sanity: 40, motivation: 40 })
 
 describe('магазин', () => {
+  it('предварительный эффект совпадает с покупкой при максимуме, около него и при низких значениях', () => {
+    for (const sanity of [100, 98, 20]) {
+      const game = { ...richDay(), sanity }
+      const preview = previewPurchaseEffects(game, 'rocking-chair')[0]
+      expect(preview.actual).toBe(Math.min(12, 100 - sanity))
+      expect(purchase(game, 'rocking-chair').state.sanity - sanity).toBe(preview.actual)
+    }
+    const game = { ...richDay(), sanity: 99, motivation: 20 }
+    expect(previewPurchaseEffects(game, 'plant')).toEqual([
+      { stat: 'sanity', amount: 8, actual: 1 },
+      { stat: 'motivation', amount: 5, actual: 5 },
+    ])
+  })
   it('продаёт кресло-качалку один раз и восстанавливает покупку и прежние вещи', () => {
     const old = { ...richDay(), ownedItems: ['lamp'] as const }
     let raw = JSON.stringify({ version: 19, game: old, events: createEventSession() })
